@@ -222,8 +222,34 @@ def old():
             image_event_id=image_event_id, barcodes=matching_barcodes, \
             image_path=image_path, file_uuid=derivative_file_uuid, derived_from_file=arch_file_uuid)
 
-def process(file_path=None):
+def process(file_path=None, new_stem=None, uuid=None ,barcode=None, barcodes=None, image_event_id=None):
     print('Processing:', file_path.name)
+    rename(file_path=file_path, new_stem=new_stem)
+
+def rename(file_path=None, new_stem=None):
+    #current_path = os.path.join(current_working_path, original_basename)
+    parent_path = file_path.parent
+    file_extension = file_path.suffix
+    new_file_name = new_stem + file_extension
+    #print('new_file_name:', new_file_name)
+    new_path = parent_path.joinpath(new_file_name)
+    #print('new_path:', new_path)
+
+    if file_path.exists():
+        print('Exists:', file_path)
+        if new_path.exists():
+            print('ALERT - file exists, can not overwrite:')
+            print(new_path)
+        else:
+            try:
+                #os.rename(current_path, new_path)
+                file_path.rename(new_path)
+            except OSError:
+                # Possible problem with character in new filename
+                print('ALERT - OSError. new_path:', new_path, 'file_path:', file_path )
+            except Error as e:
+                print("Unexpected error:", e)
+                raise
 
 def get_barcodes(file_path=None):
     # read barcodes from JPG
@@ -242,8 +268,10 @@ def get_barcodes(file_path=None):
         return None
 
 def walk(path=None):
+    scan_start_time = datetime.now()
     for root, dirs, files in os.walk(path):
         for file in files:
+            # files_analyzed += 1
             file_path_string = os.path.join(root, file)
             file_path = Path(file_path_string)
             #print(file_path.suffix)
@@ -251,33 +279,42 @@ def walk(path=None):
                 #print(file_path.name)
                 # Get barcodes
                 barcodes = get_barcodes(file_path=file_path)
-                print('barcodes:', barcodes)
+                #print('barcodes:', barcodes)
                 # get file stem
-                file_stem = file_path.stem
-                #print(file_stem)
-                # find archive files matching stem
-                arch_file_path = None
-                for archive_extension in ARCHIVE_FILE_TYPES:
-                    potential_arch_file_name = file_stem + archive_extension
-                    potential_arch_file_path = os.path.join(directory_path, potential_arch_file_name)
-                    # test if archive file exists
-                    # TODO change filename comparison be case-sensitive
+                if barcodes:
+                    file_stem = file_path.stem
+                    #print(file_stem)
+                    # find archive files matching stem
+                    arch_file_path = None
+                    for archive_extension in ARCHIVE_FILE_TYPES:
+                        potential_arch_file_name = file_stem + archive_extension
+                        potential_arch_file_path_string = os.path.join(directory_path, potential_arch_file_name)
+                        potential_arch_file_path = Path(potential_arch_file_path_string)
+                        # test if archive file exists
+                        # TODO change filename comparison be case-sensitive
 
-                    if os.path.exists(potential_arch_file_path):
-                        arch_file_path = Path(potential_arch_file_path)
-                        #TODO generate hash, uuid, read creation time, etc
-                        #print('matching achive file:', arch_file_path)
-                        # stop looking for archive file, go with first found
-                        break
-                # process files
-                # process JPEG
-                process(file_path=file_path)
-                # process archival
-                process(file_path=arch_file_path)
+                        # if os.path.exists(potential_arch_file_path):
+                        if potential_arch_file_path.exists():
+                            # This is using case insensitive matching on Mac
+                            arch_file_path = potential_arch_file_path
+                            #TODO generate hash, uuid, read creation time, etc
+                            #print('matching achive file:', arch_file_path)
+                            # stop looking for archive file, go with first found
+                            break
+                    image_event_id = str(uuid.uuid4())
+                    arch_file_uuid = str(uuid.uuid4())
+                    derivative_file_uuid = str(uuid.uuid4())
+                    # assume first barcode
+                    # TODO check barcode pattern
+                    barcode=barcodes[0]['data']
 
+                    # process JPEG
+                    process(file_path=file_path, new_stem=barcode, uuid=derivative_file_uuid ,barcode=barcode, barcodes=barcodes, image_event_id=image_event_id)
+                    # process archival
+                    process(file_path=arch_file_path, new_stem=barcode, uuid=arch_file_uuid, barcode=barcode, barcodes=barcodes, image_event_id=image_event_id)
 
+# old()
 
-#old()
 print('walking:', batch_path)
 walk(path=batch_path)
 
@@ -288,7 +325,7 @@ if conn:
 """
 print('Started:', analysis_start_time)
 print('Completed:', analysis_end_time)
-print('Files analyized:', files_analyzed)
+print('Files analyzed:', files_analyzed)
 print('Duration:', analysis_end_time - analysis_start_time)
 if files_analyzed > 0:
     print('Time per file:', (analysis_end_time - analysis_start_time)/files_analyzed)
