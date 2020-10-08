@@ -225,8 +225,8 @@ def old():
 def walk(path=None):
     for root, dirs, files in os.walk(path):
         for file in files:
-            #print(os.path.join(root, file))
-            file_path = Path(file)
+            file_path_string = os.path.join(root, file)
+            file_path = Path(file_path_string)
             #print(file_path.suffix)
             if file_path.suffix in INPUT_FILE_TYPES:
                 print(file)
