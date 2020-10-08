@@ -8,6 +8,8 @@ import csv
 import os
 import platform
 from PIL import Image
+import os
+from pathlib import Path
 #import sqlite3 as lite
 from pyzbar.pyzbar import decode
 
@@ -220,7 +222,21 @@ def old():
             image_event_id=image_event_id, barcodes=matching_barcodes, \
             image_path=image_path, file_uuid=derivative_file_uuid, derived_from_file=arch_file_uuid)
 
-old()
+def walk(path=None):
+    for root, dirs, files in os.walk(path):
+        for file in files:
+            #print(os.path.join(root, file))
+            file_path = Path(file)
+            #print(file_path.suffix)
+            if file_path.suffix in INPUT_FILE_TYPES:
+                print(file)
+
+
+    #return matches
+
+#old()
+
+walk(path=batch_path)
 
 analysis_end_time = datetime.now()
 """
