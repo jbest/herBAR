@@ -7,13 +7,14 @@ import re
 import csv
 import os
 import platform
+from PIL import Image
 #import sqlite3 as lite
 from pyzbar.pyzbar import decode
 
 # File extensions that are scanned and logged
-INPUT_FILE_TYPES = ('.jpg', '.jpeg', '.JPG', '.JPEG')
+INPUT_FILE_TYPES = ['.jpg', '.jpeg', '.JPG', '.JPEG']
 # File type extensions that are logged when filename matches a scanned input file
-ARCHIVE_FILE_TYPES = ('.CR2', '.cr2', '.RAW', '.raw')
+ARCHIVE_FILE_TYPES = ['.CR2', '.cr2', '.RAW', '.raw']
 # Barcode symbologies accepted, others ignored
 ACCEPTED_SYMBOLOGIES = ['CODE39']
 #TODO add accepted barcode string patterns
