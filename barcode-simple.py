@@ -222,6 +222,25 @@ def old():
             image_event_id=image_event_id, barcodes=matching_barcodes, \
             image_path=image_path, file_uuid=derivative_file_uuid, derived_from_file=arch_file_uuid)
 
+def process(file_path=None):
+    print('Processing:', file_path.name)
+
+def get_barcodes(file_path=None):
+    # read barcodes from JPG
+    barcodes = decode(Image.open(file_path))
+    matching_barcodes = []
+    if barcodes:
+        for barcode in barcodes:
+            if str(barcode.type) in ACCEPTED_SYMBOLOGIES:
+                symbology_type = str(barcode.type)
+                data = barcode.data.decode('UTF-8')
+                matching_barcodes.append({'type':symbology_type, 'data':data})
+                print(symbology_type, data)
+        return matching_barcodes
+    else:
+        #print('No barcodes found')
+        return None
+
 def walk(path=None):
     for root, dirs, files in os.walk(path):
         for file in files:
@@ -229,13 +248,37 @@ def walk(path=None):
             file_path = Path(file_path_string)
             #print(file_path.suffix)
             if file_path.suffix in INPUT_FILE_TYPES:
-                print(file)
+                #print(file_path.name)
+                # Get barcodes
+                barcodes = get_barcodes(file_path=file_path)
+                print('barcodes:', barcodes)
+                # get file stem
+                file_stem = file_path.stem
+                #print(file_stem)
+                # find archive files matching stem
+                arch_file_path = None
+                for archive_extension in ARCHIVE_FILE_TYPES:
+                    potential_arch_file_name = file_stem + archive_extension
+                    potential_arch_file_path = os.path.join(directory_path, potential_arch_file_name)
+                    # test if archive file exists
+                    # TODO change filename comparison be case-sensitive
+
+                    if os.path.exists(potential_arch_file_path):
+                        arch_file_path = Path(potential_arch_file_path)
+                        #TODO generate hash, uuid, read creation time, etc
+                        #print('matching achive file:', arch_file_path)
+                        # stop looking for archive file, go with first found
+                        break
+                # process files
+                # process JPEG
+                process(file_path=file_path)
+                # process archival
+                process(file_path=arch_file_path)
 
 
-    #return matches
 
 #old()
-
+print('walking:', batch_path)
 walk(path=batch_path)
 
 analysis_end_time = datetime.now()
