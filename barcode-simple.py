@@ -224,7 +224,13 @@ def old():
 
 def process(file_path=None, new_stem=None, uuid=None ,barcode=None, barcodes=None, image_event_id=None):
     print('Processing:', file_path.name)
-    rename(file_path=file_path, new_stem=new_stem)
+    rename_status = rename(file_path=file_path, new_stem=new_stem)
+    if rename_status:
+        # log success
+        print('log success')
+    else:
+        # log fail
+        print('log fail')
 
 def rename(file_path=None, new_stem=None):
     #current_path = os.path.join(current_working_path, original_basename)
@@ -244,9 +250,11 @@ def rename(file_path=None, new_stem=None):
             try:
                 #os.rename(current_path, new_path)
                 file_path.rename(new_path)
+                return True
             except OSError:
                 # Possible problem with character in new filename
                 print('ALERT - OSError. new_path:', new_path, 'file_path:', file_path )
+                return False
             except Error as e:
                 print("Unexpected error:", e)
                 raise
