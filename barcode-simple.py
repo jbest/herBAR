@@ -190,10 +190,8 @@ for image_path in sorted(glob.glob(os.path.join(directory_path, '*.JPG')), key=o
     # read barcodes from JPG
     barcodes = decode(Image.open(image_path))
     matching_barcodes = []
-    image_classifications = []
     best_match = None
     if barcodes:
-        image_classifications.append('barcoded')
         for barcode in barcodes:
             if str(barcode.type) in ACCEPTED_SYMBOLOGIES:
                 symbology_type = str(barcode.type)
@@ -206,8 +204,7 @@ for image_path in sorted(glob.glob(os.path.join(directory_path, '*.JPG')), key=o
     scan_end_time = datetime.now()
     # TODO report analysis progress and ETA
 
-    image_classifications_string = ",".join(image_classifications)
-    #log CR2 data
+    # log raw data
     if arch_file_path:
         arch_file_uuid = str(uuid.uuid4())
         log_file_data(batch_id=batch_id, batch_path=batch_path, batch_flags=batch_flags, \
