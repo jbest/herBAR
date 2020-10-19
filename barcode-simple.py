@@ -10,7 +10,6 @@ import platform
 from PIL import Image
 import os
 from pathlib import Path
-#import sqlite3 as lite
 from pyzbar.pyzbar import decode
 
 # File extensions that are scanned and logged
@@ -104,22 +103,6 @@ ap.add_argument("-b", "--batch", required=False, \
 ap.add_argument("-o", "--output", required=False, \
     help="Path to the directory where log file is written.")
 args = vars(ap.parse_args())
-
-# set up database
-"""
-# Temporarily removing need for SQLite
-conn = lite.connect('workflow.db')
-cur = conn.cursor()
-try:
-    cur.execute('''CREATE TABLE images (id INTEGER PRIMARY KEY, \
-        batch_id text, batch_path text, batch_flags text, project_id text, \
-        image_event_id text, datetime_analyzed text, \
-        barcodes text, image_classifications text, \
-        image_path text, basename text, file_name text, file_extension text, \
-        file_creation_time text, file_hash text, file_uuid text, derived_from_file text)''')
-except lite.Error as e:
-    print(e)
-"""
 
 analysis_start_time = datetime.now()
 batch_id = str(uuid.uuid4())
@@ -272,7 +255,7 @@ def get_barcodes(file_path=None):
                 print(symbology_type, data)
         return matching_barcodes
     else:
-        #print('No barcodes found')
+        print('No barcodes found')
         return None
 
 def walk(path=None):
@@ -327,10 +310,7 @@ print('walking:', batch_path)
 walk(path=batch_path)
 
 analysis_end_time = datetime.now()
-"""
-if conn:
-    conn.close()
-"""
+
 print('Started:', analysis_start_time)
 print('Completed:', analysis_end_time)
 print('Files analyzed:', files_analyzed)
