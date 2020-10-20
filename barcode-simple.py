@@ -86,6 +86,7 @@ def log_file_data(batch_id=None, batch_path=None, batch_flags=None, \
     else:
         barcodes = ''
 
+    # TODO change CSV writer to DictWriter
     reportWriter.writerow([\
     batch_id, batch_path, batch_flags, project_id, \
     image_event_id, datetime_analyzed, barcodes, image_classifications, \
@@ -96,13 +97,16 @@ def log_file_data(batch_id=None, batch_path=None, batch_flags=None, \
 ap = argparse.ArgumentParser()
 ap.add_argument("-s", "--source", required=True, \
     help="Path to the directory that contains the images to be analyzed.")
-ap.add_argument("-p", "--project", required=True, choices=PROJECT_IDS, \
+ap.add_argument("-p", "--project", required=False, choices=PROJECT_IDS, \
     help="Project name for filtering in database")
 ap.add_argument("-b", "--batch", required=False, \
-    help="Flags written to batch_flags")
+    help="Flags written to batch_flags, can be used for filtering downstream data.")
 ap.add_argument("-o", "--output", required=False, \
     help="Path to the directory where log file is written.")
+ap.add_argument("-n", "--no_rename", required=False, action='store_true', \
+    help="Files will not be renamed, only log file generated.")
 args = vars(ap.parse_args())
+#TODO add test run option
 
 analysis_start_time = datetime.now()
 batch_id = str(uuid.uuid4())
@@ -115,6 +119,8 @@ if args["batch"]:
 else:
     batch_flags=None
 
+no_rename = args["no_rename"]
+
 # Create file for results
 log_file_name = analysis_start_time.date().isoformat() + '_' + batch_id + '.csv'
 # Test output path
@@ -123,10 +129,20 @@ if args["output"] is not None:
     print('output_directory:', output_directory)
     #TODO make sure directory exists and is writeable
     log_file_path = os.path.join(output_directory, log_file_name)
-    reportFile = open(log_file_path, "w")
+    #log_file = open(log_file_path, "w")
 else:
-    reportFile = open(log_file_name, "w") # will default to write in location where script is executed
+    #log_file = open(log_file_name, "w") # will default to write in location where script is executed
+    log_file_path = log_file_name
 
+with open(log_file_path, 'w', newline='') as csvfile:
+    # write header
+    fieldnames = ['batch_id', 'batch_path', 'batch_flags', 'project_id', \
+        'image_event_id', 'datetime_analyzed', 'barcodes', 'image_classifications', \
+        'image_path', 'basename', 'file_name', 'file_extension', 'file_creation_time', \
+        'file_hash', 'file_uuid', 'derived_from_file']
+    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+    writer.writeheader()
+"""
 reportWriter = csv.writer(reportFile, delimiter=FIELD_DELIMITER, escapechar='#')
 # write header
 reportWriter.writerow([\
@@ -134,6 +150,7 @@ reportWriter.writerow([\
     "image_event_id", "datetime_analyzed", "barcodes", "image_classifications", \
     "image_path", "basename", "file_name", "file_extension", "file_creation_time", \
     "file_hash", "file_uuid", "derived_from_file"])
+"""
 
 #TODO extract information from directory name (imager, station, etc)
 #iterate JPG files in directory passed from args
@@ -232,8 +249,12 @@ def rename(file_path=None, new_stem=None):
         else:
             try:
                 #os.rename(current_path, new_path)
-                file_path.rename(new_path)
-                return True
+                if no_rename:
+                    # don't rename but return True to simulate for logging
+                    return True
+                else:
+                    file_path.rename(new_path)
+                    return True
             except OSError:
                 # Possible problem with character in new filename
                 print('ALERT - OSError. new_path:', new_path, 'file_path:', file_path )
