@@ -134,14 +134,16 @@ else:
     #log_file = open(log_file_name, "w") # will default to write in location where script is executed
     log_file_path = log_file_name
 
-with open(log_file_path, 'w', newline='') as csvfile:
-    # write header
-    fieldnames = ['batch_id', 'batch_path', 'batch_flags', 'project_id', \
-        'image_event_id', 'datetime_analyzed', 'barcodes', 'image_classifications', \
-        'image_path', 'basename', 'file_name', 'file_extension', 'file_creation_time', \
-        'file_hash', 'file_uuid', 'derived_from_file']
-    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-    writer.writeheader()
+#with open(log_file_path, 'w', newline='') as csvfile:
+csvfile = open(log_file_path, 'w', newline='')
+# write header
+fieldnames = ['batch_id', 'batch_path', 'batch_flags', 'project_id', \
+    'image_event_id', 'datetime_analyzed', 'barcodes', 'image_classifications', \
+    'image_path', 'basename', 'file_name', 'file_extension', 'file_creation_time', \
+    'file_hash', 'file_uuid', 'derived_from_file']
+log_writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+log_writer.writeheader()
+
 """
 reportWriter = csv.writer(reportFile, delimiter=FIELD_DELIMITER, escapechar='#')
 # write header
@@ -228,6 +230,7 @@ def process(file_path=None, new_stem=None, uuid=None ,barcode=None, barcodes=Non
     if rename_status:
         # log success
         print('log success')
+        log_writer.writerow({'batch_id': batch_id, 'image_path': file_path, 'barcodes': barcodes})
     else:
         # log fail
         print('log fail')
