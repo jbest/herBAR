@@ -85,13 +85,19 @@ def log_file_data(batch_id=None, batch_path=None, batch_flags=None, \
         barcodes = str(barcodes)
     else:
         barcodes = ''
-
+    # TODO log batch flags, barcode
+    log_writer.writerow({'batch_id': batch_id, 'batch_path': batch_path, 'project_id': project_id, \
+        'image_event_id': image_event_id, 'datetime_analyzed': datetime_analyzed, \
+        'image_path': image_path, 'basename': basename, 'file_name': file_name, 'file_creation_time': file_creation_time, \
+        'file_hash': file_hash, 'file_uuid': file_uuid, 'derived_from_file': derived_from_file, 'barcodes': barcodes})
+"""
     # TODO change CSV writer to DictWriter
     reportWriter.writerow([\
     batch_id, batch_path, batch_flags, project_id, \
     image_event_id, datetime_analyzed, barcodes, image_classifications, \
     image_path, basename, file_name, file_extension, file_creation_time, \
     file_hash, file_uuid, derived_from_file])
+"""
 
 # set up argument parser
 ap = argparse.ArgumentParser()
@@ -232,9 +238,14 @@ def process(file_path=None, new_stem=None, uuid=None ,barcode=None, barcodes=Non
         print('log success')
         # TODO log derivative_file_uuid and arch_file_uuid into file_uuid and derived_from_file
         # TODO log success or fail
+        """
         log_writer.writerow({'batch_id': batch_id, 'batch_path': batch_path, \
             'batch_flags': batch_flags,  'image_event_id': image_event_id, 'barcode': barcode, \
              'image_path': file_path, 'barcodes': barcodes})
+        """
+        log_file_data(batch_id=batch_id, batch_path=batch_path, batch_flags=batch_flags, \
+            image_event_id=image_event_id, barcodes=barcodes, \
+            image_path=file_path, file_uuid=None, derived_from_file=None)
     else:
         # log fail
         print('log fail')
