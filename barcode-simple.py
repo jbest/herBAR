@@ -8,19 +8,18 @@ import csv
 import os
 import platform
 from PIL import Image
-import os
 from pathlib import Path
 from pyzbar.pyzbar import decode
 
 # File extensions that are scanned and logged
 INPUT_FILE_TYPES = ['.jpg', '.jpeg', '.JPG', '.JPEG']
 # File type extensions that are logged when filename matches a scanned input file
-ARCHIVE_FILE_TYPES = ['.CR2', '.cr2', '.RAW', '.raw']
+ARCHIVE_FILE_TYPES = ['.CR2', '.cr2', '.RAW', '.raw', '.NEF', '.nef']
 # Barcode symbologies accepted, others ignored
 ACCEPTED_SYMBOLOGIES = ['CODE39']
-#TODO add accepted barcode string patterns
-FIELD_DELIMITER = ',' # delimiter used in output CSV
-PROJECT_IDS = ['TX','ANHC','VDB','TEST', 'TCN-Ferns']
+# TODO add accepted barcode string patterns
+FIELD_DELIMITER = ','  # delimiter used in output CSV
+PROJECT_IDS = ['TX', 'ANHC', 'VDB', 'TEST', 'Ferns', 'TORCH', 'EF']
 
 def md5hash(fname):
     # from https://stackoverflow.com/questions/3431825/generating-an-md5-checksum-of-a-file
@@ -105,31 +104,29 @@ def log_file_data(
 
 # set up argument parser
 ap = argparse.ArgumentParser()
-ap.add_argument("-s", "--source", required=True, \
+ap.add_argument("-s", "--source", required=True,
     help="Path to the directory that contains the images to be analyzed.")
-ap.add_argument("-p", "--project", required=False, choices=PROJECT_IDS, \
+ap.add_argument("-p", "--project", required=False, choices=PROJECT_IDS,
     help="Project name for filtering in database")
-ap.add_argument("-b", "--batch", required=False, \
+ap.add_argument("-b", "--batch", required=False,
     help="Flags written to batch_flags, can be used for filtering downstream data.")
-ap.add_argument("-o", "--output", required=False, \
+ap.add_argument("-o", "--output", required=False,
     help="Path to the directory where log file is written.")
-ap.add_argument("-n", "--no_rename", required=False, action='store_true', \
+ap.add_argument("-n", "--no_rename", required=False, action='store_true',
     help="Files will not be renamed, only log file generated.")
 args = vars(ap.parse_args())
-#TODO add test run option
 
 analysis_start_time = datetime.now()
 batch_id = str(uuid.uuid4())
 batch_path = os.path.realpath(args["source"])
 project_id = args["project"]
+no_rename = args["no_rename"]
 
 if args["batch"]:
     batch_flags = args["batch"]
     print('Batch flags:', batch_flags)
 else:
     batch_flags=None
-
-no_rename = args["no_rename"]
 
 # Create file for results
 log_file_name = analysis_start_time.date().isoformat() + '_' + batch_id + '.csv'
@@ -147,7 +144,7 @@ csvfile = open(log_file_path, 'w', newline='')
 fieldnames = [
     'batch_id', 'batch_path', 'batch_flags', 'project_id',
     'image_event_id', 'datetime_analyzed', 'barcodes', 'barcode',
-    'image_path', 'basename', 'file_name', 'file_extension', 'new_path',
+    'image_path', 'basename', 'file_name', 'new_path',
     'file_creation_time',
     'file_hash', 'file_uuid', 'derived_from_file', 'derived_from_uuid']
 log_writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -166,11 +163,8 @@ def process(
     derived_from_file=None, derived_from_uuid=None,
     barcode=None, barcodes=None,
     image_event_id=None):
-    print('Processing:', file_path.name)
     rename_status, new_path = rename(file_path=file_path, new_stem=new_stem)
     if rename_status:
-        # log success
-        print('log success:', barcode)
         # TODO log derivative_file_uuid and arch_file_uuid into file_uuid and derived_from_file
         log_file_data(
             batch_id=batch_id, batch_path=batch_path, batch_flags=batch_flags, # from global vars
@@ -181,17 +175,15 @@ def process(
             derived_from_file=derived_from_file, derived_from_uuid=derived_from_uuid)
     else:
         # TODO log fail
-        print('log fail')
+        print('Rename failed:', file_path)
 
 def rename(file_path=None, new_stem=None):
-    #current_path = os.path.join(current_working_path, original_basename)
     parent_path = file_path.parent
     file_extension = file_path.suffix
     new_file_name = new_stem + file_extension
     new_path = parent_path.joinpath(new_file_name)
 
     if file_path.exists():
-        print('Exists:', file_path)
         if new_path.exists():
             print('ALERT - file exists, can not overwrite:')
             print(new_path)
@@ -225,13 +217,14 @@ def get_barcodes(file_path=None):
                 print(symbology_type, data)
         return matching_barcodes
     else:
-        print('No barcodes found')
+        print('No barcodes found:', file_path)
         return None
 
 def walk(path=None):
+    global files_analyzed
     for root, dirs, files in os.walk(path):
         for file in files:
-            # files_analyzed += 1
+            files_analyzed += 1
             file_path_string = os.path.join(root, file)
             file_path = Path(file_path_string)
             if file_path.suffix in INPUT_FILE_TYPES:
@@ -248,10 +241,7 @@ def walk(path=None):
                         # test if archive file exists
                         # TODO change filename comparison to be case-sensitive
                         if potential_arch_file_path.exists():
-                            # This is using case insensitive matching on Mac
                             arch_file_path = potential_arch_file_path
-                            #TODO generate hash, uuid, read creation time, etc
-                            #print('matching achive file:', arch_file_path)
                             # stop looking for archive file, go with first found
                             break
                     image_event_id = str(uuid.uuid4())
@@ -296,5 +286,5 @@ print('Completed:', analysis_end_time)
 print('Files analyzed:', files_analyzed)
 print('Duration:', analysis_end_time - analysis_start_time)
 if files_analyzed > 0:
-    print('Time per file:', (analysis_end_time - analysis_start_time)/files_analyzed)
+    print('Time per file:', (analysis_end_time - analysis_start_time) / files_analyzed)
 print('Report written to:', log_file_path)
