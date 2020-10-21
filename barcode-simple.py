@@ -136,10 +136,11 @@ else:
 #with open(log_file_path, 'w', newline='') as csvfile:
 csvfile = open(log_file_path, 'w', newline='')
 # write header
-fieldnames = ['batch_id', 'batch_path', 'batch_flags', 'project_id', \
-    'image_event_id', 'datetime_analyzed', 'barcodes', 'barcode', \
-    'image_path', 'basename', 'file_name', 'file_extension', 'new_path', \
-     'file_creation_time', \
+fieldnames = [
+    'batch_id', 'batch_path', 'batch_flags', 'project_id',
+    'image_event_id', 'datetime_analyzed', 'barcodes', 'barcode',
+    'image_path', 'basename', 'file_name', 'file_extension', 'new_path',
+    'file_creation_time',
     'file_hash', 'file_uuid', 'derived_from_file']
 log_writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 log_writer.writeheader()
