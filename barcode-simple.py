@@ -70,8 +70,8 @@ def casedpath(path):
     return r and r[0] or path
 
 def log_file_data(batch_id=None, batch_path=None, batch_flags=None, \
-    image_event_id=None, barcodes=None, image_classifications=None, \
-    image_path=None, file_uuid=None, derived_from_file=None):
+    image_event_id=None, barcodes=None, barcode=None, image_classifications=None, \
+    image_path=None, new_path=None, file_uuid=None, derived_from_file=None):
     basename = os.path.basename(image_path)
     file_name, file_extension = os.path.splitext(basename)
     # Get file creation time
@@ -88,16 +88,9 @@ def log_file_data(batch_id=None, batch_path=None, batch_flags=None, \
     # TODO log batch flags, barcode
     log_writer.writerow({'batch_id': batch_id, 'batch_path': batch_path, 'project_id': project_id, \
         'image_event_id': image_event_id, 'datetime_analyzed': datetime_analyzed, \
-        'image_path': image_path, 'basename': basename, 'file_name': file_name, 'file_creation_time': file_creation_time, \
-        'file_hash': file_hash, 'file_uuid': file_uuid, 'derived_from_file': derived_from_file, 'barcodes': barcodes})
-"""
-    # TODO change CSV writer to DictWriter
-    reportWriter.writerow([\
-    batch_id, batch_path, batch_flags, project_id, \
-    image_event_id, datetime_analyzed, barcodes, image_classifications, \
-    image_path, basename, file_name, file_extension, file_creation_time, \
-    file_hash, file_uuid, derived_from_file])
-"""
+        'image_path': image_path, 'basename': basename, 'file_name': file_name, 'new_path': new_path, \
+        'file_creation_time': file_creation_time, \
+        'file_hash': file_hash, 'file_uuid': file_uuid, 'derived_from_file': derived_from_file, 'barcodes': barcodes, 'barcode': barcode})
 
 # set up argument parser
 ap = argparse.ArgumentParser()
@@ -145,20 +138,11 @@ csvfile = open(log_file_path, 'w', newline='')
 # write header
 fieldnames = ['batch_id', 'batch_path', 'batch_flags', 'project_id', \
     'image_event_id', 'datetime_analyzed', 'barcodes', 'barcode', \
-    'image_path', 'basename', 'file_name', 'file_extension', 'file_creation_time', \
+    'image_path', 'basename', 'file_name', 'file_extension', 'new_path', \
+     'file_creation_time', \
     'file_hash', 'file_uuid', 'derived_from_file']
 log_writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 log_writer.writeheader()
-
-"""
-reportWriter = csv.writer(reportFile, delimiter=FIELD_DELIMITER, escapechar='#')
-# write header
-reportWriter.writerow([\
-    "batch_id", "batch_path", "batch_flags", "project_id", \
-    "image_event_id", "datetime_analyzed", "barcodes", "image_classifications", \
-    "image_path", "basename", "file_name", "file_extension", "file_creation_time", \
-    "file_hash", "file_uuid", "derived_from_file"])
-"""
 
 #TODO extract information from directory name (imager, station, etc)
 #iterate JPG files in directory passed from args
@@ -232,20 +216,16 @@ def old():
 
 def process(file_path=None, new_stem=None, uuid=None ,barcode=None, barcodes=None, image_event_id=None):
     print('Processing:', file_path.name)
-    rename_status = rename(file_path=file_path, new_stem=new_stem)
+    rename_status, new_path = rename(file_path=file_path, new_stem=new_stem)
     if rename_status:
         # log success
-        print('log success')
+        print('log success:', barcode)
         # TODO log derivative_file_uuid and arch_file_uuid into file_uuid and derived_from_file
         # TODO log success or fail
-        """
-        log_writer.writerow({'batch_id': batch_id, 'batch_path': batch_path, \
-            'batch_flags': batch_flags,  'image_event_id': image_event_id, 'barcode': barcode, \
-             'image_path': file_path, 'barcodes': barcodes})
-        """
         log_file_data(batch_id=batch_id, batch_path=batch_path, batch_flags=batch_flags, \
-            image_event_id=image_event_id, barcodes=barcodes, \
-            image_path=file_path, file_uuid=None, derived_from_file=None)
+            image_event_id=image_event_id, barcode=barcode, barcodes=barcodes, \
+            image_path=file_path, new_path=new_path, \
+            file_uuid=None, derived_from_file=None)
     else:
         # log fail
         print('log fail')
@@ -269,14 +249,14 @@ def rename(file_path=None, new_stem=None):
                 #os.rename(current_path, new_path)
                 if no_rename:
                     # don't rename but return True to simulate for logging
-                    return True
+                    return True, file_path
                 else:
                     file_path.rename(new_path)
-                    return True
+                    return True, new_path
             except OSError:
                 # Possible problem with character in new filename
                 print('ALERT - OSError. new_path:', new_path, 'file_path:', file_path )
-                return False
+                return False, None
             except Error as e:
                 print("Unexpected error:", e)
                 raise
@@ -336,7 +316,7 @@ def walk(path=None):
                     derivative_file_uuid = str(uuid.uuid4())
                     # assume first barcode
                     # TODO check barcode pattern
-                    barcode=barcodes[0]['data']
+                    barcode = barcodes[0]['data']
 
                     # process JPEG
                     process(file_path=file_path, new_stem=barcode, uuid=derivative_file_uuid ,barcode=barcode, barcodes=barcodes, image_event_id=image_event_id)
