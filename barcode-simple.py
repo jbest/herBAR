@@ -138,7 +138,7 @@ else:
 csvfile = open(log_file_path, 'w', newline='')
 # write header
 fieldnames = ['batch_id', 'batch_path', 'batch_flags', 'project_id', \
-    'image_event_id', 'datetime_analyzed', 'barcodes', 'image_classifications', \
+    'image_event_id', 'datetime_analyzed', 'barcodes', 'barcode', \
     'image_path', 'basename', 'file_name', 'file_extension', 'file_creation_time', \
     'file_hash', 'file_uuid', 'derived_from_file']
 log_writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -230,7 +230,11 @@ def process(file_path=None, new_stem=None, uuid=None ,barcode=None, barcodes=Non
     if rename_status:
         # log success
         print('log success')
-        log_writer.writerow({'batch_id': batch_id, 'image_path': file_path, 'barcodes': barcodes})
+        # TODO log derivative_file_uuid and arch_file_uuid into file_uuid and derived_from_file
+        # TODO log success or fail
+        log_writer.writerow({'batch_id': batch_id, 'batch_path': batch_path, \
+            'batch_flags': batch_flags,  'image_event_id': image_event_id, 'barcode': barcode, \
+             'image_path': file_path, 'barcodes': barcodes})
     else:
         # log fail
         print('log fail')
@@ -332,6 +336,9 @@ def walk(path=None):
 
 print('walking:', batch_path)
 walk(path=batch_path)
+
+# Close CSV log file
+csvfile.close()
 
 analysis_end_time = datetime.now()
 
