@@ -150,69 +150,6 @@ directory_path = os.path.realpath(args["source"])
 files_analyzed = 0
 print('Scanning directory:', directory_path)
 #TODO change image search to use INPUT_FILE_TYPES
-def old():
-    files_analyzed = 0
-    for image_path in sorted(glob.glob(os.path.join(directory_path, '*.JPG')), key=os.path.getmtime): #this file search seems to be case sensitive
-        files_analyzed += 1
-        scan_start_time = datetime.now()
-        image_event_id = str(uuid.uuid4())
-        # Gather file data
-        #TODO getting basename and file name is done twice, maybe simplify?
-        basename = os.path.basename(image_path)
-        file_name, file_extension = os.path.splitext(basename)
-        # check if a companion archive file exists
-        # iterate through potential extensions for archive files
-        arch_file_path = None
-        for archive_extension in ARCHIVE_FILE_TYPES:
-            potential_arch_file_name = file_name + archive_extension
-            potential_arch_file_path = os.path.join(directory_path, potential_arch_file_name)
-            # test if archive file exists
-            # TODO change filename comparison be case-sensitive
-
-            if os.path.exists(potential_arch_file_path):
-                arch_file_path = potential_arch_file_path
-                #TODO generate hash, uuid, read creation time, etc
-                break
-
-        # print filepaths
-        print('Image file:', os.path.basename(image_path))
-        if arch_file_path is None:
-            print('Archive file: NOT FOUND')
-        else:
-            #print('Archive file:', arch_file_path)
-            print('Archive file:', os.path.basename(arch_file_path))
-
-        # read barcodes from JPG
-        barcodes = decode(Image.open(image_path))
-        matching_barcodes = []
-        best_match = None
-        if barcodes:
-            for barcode in barcodes:
-                if str(barcode.type) in ACCEPTED_SYMBOLOGIES:
-                    symbology_type = str(barcode.type)
-                    data = barcode.data.decode('UTF-8')
-                    matching_barcodes.append({'type':symbology_type, 'data':data})
-                    print(symbology_type, data)
-        else:
-            print('No barcodes found')
-
-        scan_end_time = datetime.now()
-        # TODO report analysis progress and ETA
-
-        # log raw data
-        if arch_file_path:
-            arch_file_uuid = str(uuid.uuid4())
-            log_file_data(batch_id=batch_id, batch_path=batch_path, batch_flags=batch_flags, \
-                image_event_id=image_event_id, barcodes=matching_barcodes, \
-                image_path=arch_file_path, file_uuid=arch_file_uuid)
-        else:
-            arch_file_uuid = None
-
-        #log JPG data
-        derivative_file_uuid = str(uuid.uuid4())
-        log_file_data(batch_id=batch_id, batch_path=batch_path, batch_flags=batch_flags, \
-            image_event_id=image_event_id, barcodes=matching_barcodes, \
-            image_path=image_path, file_uuid=derivative_file_uuid, derived_from_file=arch_file_uuid)
 
 def process(file_path=None, new_stem=None, uuid=None ,barcode=None, barcodes=None, image_event_id=None):
     print('Processing:', file_path.name)
@@ -319,6 +256,7 @@ def walk(path=None):
                     barcode = barcodes[0]['data']
 
                     # process JPEG
+                    # TODO add derived from uuid
                     process(file_path=file_path, new_stem=barcode, uuid=derivative_file_uuid ,barcode=barcode, barcodes=barcodes, image_event_id=image_event_id)
                     # process archival
                     process(file_path=arch_file_path, new_stem=barcode, uuid=arch_file_uuid, barcode=barcode, barcodes=barcodes, image_event_id=image_event_id)
