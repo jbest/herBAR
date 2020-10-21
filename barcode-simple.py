@@ -177,7 +177,7 @@ def process(
             image_event_id=image_event_id,
             barcode=barcode, barcodes=barcodes,
             image_path=file_path, new_path=new_path,
-            file_uuid=None,
+            file_uuid=uuid,
             derived_from_file=derived_from_file, derived_from_uuid=derived_from_uuid)
     else:
         # TODO log fail
