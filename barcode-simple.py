@@ -128,12 +128,9 @@ if args["output"] is not None:
     print('output_directory:', output_directory)
     #TODO make sure directory exists and is writeable
     log_file_path = os.path.join(output_directory, log_file_name)
-    #log_file = open(log_file_path, "w")
 else:
-    #log_file = open(log_file_name, "w") # will default to write in location where script is executed
     log_file_path = log_file_name
 
-#with open(log_file_path, 'w', newline='') as csvfile:
 csvfile = open(log_file_path, 'w', newline='')
 # write header
 fieldnames = [
@@ -146,7 +143,7 @@ log_writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 log_writer.writeheader()
 
 #TODO extract information from directory name (imager, station, etc)
-#iterate JPG files in directory passed from args
+
 directory_path = os.path.realpath(args["source"])
 files_analyzed = 0
 print('Scanning directory:', directory_path)
@@ -159,13 +156,13 @@ def process(file_path=None, new_stem=None, uuid=None ,barcode=None, barcodes=Non
         # log success
         print('log success:', barcode)
         # TODO log derivative_file_uuid and arch_file_uuid into file_uuid and derived_from_file
-        # TODO log success or fail
-        log_file_data(batch_id=batch_id, batch_path=batch_path, batch_flags=batch_flags, \
-            image_event_id=image_event_id, barcode=barcode, barcodes=barcodes, \
-            image_path=file_path, new_path=new_path, \
+        log_file_data(
+            batch_id=batch_id, batch_path=batch_path, batch_flags=batch_flags,
+            image_event_id=image_event_id, barcode=barcode, barcodes=barcodes,
+            image_path=file_path, new_path=new_path,
             file_uuid=None, derived_from_file=None)
     else:
-        # log fail
+        # TODO log fail
         print('log fail')
 
 def rename(file_path=None, new_stem=None):
@@ -173,9 +170,7 @@ def rename(file_path=None, new_stem=None):
     parent_path = file_path.parent
     file_extension = file_path.suffix
     new_file_name = new_stem + file_extension
-    #print('new_file_name:', new_file_name)
     new_path = parent_path.joinpath(new_file_name)
-    #print('new_path:', new_path)
 
     if file_path.exists():
         print('Exists:', file_path)
@@ -184,7 +179,6 @@ def rename(file_path=None, new_stem=None):
             print(new_path)
         else:
             try:
-                #os.rename(current_path, new_path)
                 if no_rename:
                     # don't rename but return True to simulate for logging
                     return True, file_path
@@ -205,6 +199,7 @@ def get_barcodes(file_path=None):
     matching_barcodes = []
     if barcodes:
         for barcode in barcodes:
+            # Keep only codes that match accepted symbologies
             if str(barcode.type) in ACCEPTED_SYMBOLOGIES:
                 symbology_type = str(barcode.type)
                 data = barcode.data.decode('UTF-8')
@@ -222,13 +217,9 @@ def walk(path=None):
             # files_analyzed += 1
             file_path_string = os.path.join(root, file)
             file_path = Path(file_path_string)
-            #print(file_path.suffix)
             if file_path.suffix in INPUT_FILE_TYPES:
-                #print(file_path.name)
                 # Get barcodes
                 barcodes = get_barcodes(file_path=file_path)
-                #print('barcodes:', barcodes)
-                # get file stem
                 if barcodes:
                     file_stem = file_path.stem
                     #print(file_stem)
@@ -239,9 +230,7 @@ def walk(path=None):
                         potential_arch_file_path_string = os.path.join(directory_path, potential_arch_file_name)
                         potential_arch_file_path = Path(potential_arch_file_path_string)
                         # test if archive file exists
-                        # TODO change filename comparison be case-sensitive
-
-                        # if os.path.exists(potential_arch_file_path):
+                        # TODO change filename comparison to be case-sensitive
                         if potential_arch_file_path.exists():
                             # This is using case insensitive matching on Mac
                             arch_file_path = potential_arch_file_path
