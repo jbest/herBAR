@@ -73,17 +73,12 @@ def log_file_data(
     image_event_id=None,
     barcodes=None,
     barcode=None,
-    image_classifications=None,
+    datetime_analyzed=None,
     image_path=None, new_path=None,
-    file_uuid=None,
+    file_uuid=None, file_creation_time=None, file_hash=None,
     derived_from_file=None, derived_from_uuid=None):
     basename = os.path.basename(image_path)
     file_name, file_extension = os.path.splitext(basename)
-    # Get file creation time
-    file_creation_time = datetime.fromtimestamp(creation_date(image_path))
-    # generate MD5 hash
-    file_hash = md5hash(image_path)
-    datetime_analyzed = datetime.now()
 
     # clean up values for writing to SQLite (doesn't like dicts)
     if barcodes:
@@ -163,15 +158,26 @@ def process(
     derived_from_file=None, derived_from_uuid=None,
     barcode=None, barcodes=None,
     image_event_id=None):
-    rename_status, new_path = rename(file_path=file_path, new_stem=new_stem)
-    if rename_status:
+    # Get file creation time
+    file_creation_time = datetime.fromtimestamp(creation_date(file_path))
+    # generate MD5 hash
+    file_hash = md5hash(file_path)
+    datetime_analyzed = datetime.now()
+
+    #rename_status, new_path = rename(file_path=file_path, new_stem=new_stem)
+    rename_result = rename(file_path=file_path, new_stem=new_stem)
+    #print('rename_result:', rename_result)
+    #if rename_status:
+    if rename_result['success']:
+        new_path = rename_result['new_path']
         # TODO log derivative_file_uuid and arch_file_uuid into file_uuid and derived_from_file
         log_file_data(
             batch_id=batch_id, batch_path=batch_path, batch_flags=batch_flags, # from global vars
             image_event_id=image_event_id,
+            datetime_analyzed=datetime_analyzed,
             barcode=barcode, barcodes=barcodes,
             image_path=file_path, new_path=new_path,
-            file_uuid=uuid,
+            file_uuid=uuid, file_creation_time=file_creation_time, file_hash=file_hash,
             derived_from_file=derived_from_file, derived_from_uuid=derived_from_uuid)
     else:
         # TODO log fail
@@ -187,18 +193,23 @@ def rename(file_path=None, new_stem=None):
         if new_path.exists():
             print('ALERT - file exists, can not overwrite:')
             print(new_path)
+            #return False, None
+            return{'success': False, 'new_path': None}
         else:
             try:
                 if no_rename:
                     # don't rename but return True to simulate for logging
-                    return True, file_path
+                    #return True, file_path
+                    return{'success': True, 'new_path': file_path}
                 else:
                     file_path.rename(new_path)
-                    return True, new_path
+                    #return True, new_path
+                    return{'success': True, 'new_path': new_path}
             except OSError:
                 # Possible problem with character in new filename
                 print('ALERT - OSError. new_path:', new_path, 'file_path:', file_path )
-                return False, None
+                #return False, None
+                return{'success': False, 'new_path': None}
             except Exception as e:
                 print("Unexpected error:", e)
                 raise
@@ -262,16 +273,19 @@ def walk(path=None):
                         barcode=barcode,
                         barcodes=barcodes,
                         image_event_id=image_event_id)
-                    # process archival
-                    process(
-                        file_path=arch_file_path,
-                        new_stem=barcode,
-                        uuid=arch_file_uuid,
-                        derived_from_uuid=None,
-                        derived_from_file=None,
-                        barcode=barcode,
-                        barcodes=barcodes,
-                        image_event_id=image_event_id)
+                    if arch_file_path:
+                        # process archival
+                        process(
+                            file_path=arch_file_path,
+                            new_stem=barcode,
+                            uuid=arch_file_uuid,
+                            derived_from_uuid=None,
+                            derived_from_file=None,
+                            barcode=barcode,
+                            barcodes=barcodes,
+                            image_event_id=image_event_id)
+                    else:
+                        print('archival file not found for:', file_path)
 
 print('walking:', batch_path)
 walk(path=batch_path)
