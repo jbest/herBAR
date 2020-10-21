@@ -69,9 +69,15 @@ def casedpath(path):
     r = glob.glob(re.sub(r'([^:/\\])(?=[/\\]|$)', r'[\1]', path))
     return r and r[0] or path
 
-def log_file_data(batch_id=None, batch_path=None, batch_flags=None, \
-    image_event_id=None, barcodes=None, barcode=None, image_classifications=None, \
-    image_path=None, new_path=None, file_uuid=None, derived_from_file=None):
+def log_file_data(
+    batch_id=None, batch_path=None, batch_flags=None,
+    image_event_id=None,
+    barcodes=None,
+    barcode=None,
+    image_classifications=None,
+    image_path=None, new_path=None,
+    file_uuid=None,
+    derived_from_file=None, derived_from_uuid=None):
     basename = os.path.basename(image_path)
     file_name, file_extension = os.path.splitext(basename)
     # Get file creation time
@@ -86,11 +92,16 @@ def log_file_data(batch_id=None, batch_path=None, batch_flags=None, \
     else:
         barcodes = ''
     # TODO log batch flags, barcode
-    log_writer.writerow({'batch_id': batch_id, 'batch_path': batch_path, 'project_id': project_id, \
-        'image_event_id': image_event_id, 'datetime_analyzed': datetime_analyzed, \
-        'image_path': image_path, 'basename': basename, 'file_name': file_name, 'new_path': new_path, \
-        'file_creation_time': file_creation_time, \
-        'file_hash': file_hash, 'file_uuid': file_uuid, 'derived_from_file': derived_from_file, 'barcodes': barcodes, 'barcode': barcode})
+    log_writer.writerow({
+        'batch_id': batch_id, 'batch_path': batch_path,
+        'project_id': project_id, 'image_event_id': image_event_id,
+        'datetime_analyzed': datetime_analyzed,
+        'image_path': image_path, 'basename': basename, 'file_name': file_name,
+        'new_path': new_path,
+        'file_creation_time': file_creation_time,
+        'file_hash': file_hash, 'file_uuid': file_uuid,
+        'derived_from_file': derived_from_file, 'derived_from_uuid': derived_from_uuid,
+        'barcodes': barcodes, 'barcode': barcode})
 
 # set up argument parser
 ap = argparse.ArgumentParser()
@@ -138,7 +149,7 @@ fieldnames = [
     'image_event_id', 'datetime_analyzed', 'barcodes', 'barcode',
     'image_path', 'basename', 'file_name', 'file_extension', 'new_path',
     'file_creation_time',
-    'file_hash', 'file_uuid', 'derived_from_file']
+    'file_hash', 'file_uuid', 'derived_from_file', 'derived_from_uuid']
 log_writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 log_writer.writeheader()
 
@@ -149,7 +160,12 @@ files_analyzed = 0
 print('Scanning directory:', directory_path)
 #TODO change image search to use INPUT_FILE_TYPES
 
-def process(file_path=None, new_stem=None, uuid=None ,barcode=None, barcodes=None, image_event_id=None):
+def process(
+    file_path=None, new_stem=None,
+    uuid=None,
+    derived_from_file=None, derived_from_uuid=None,
+    barcode=None, barcodes=None,
+    image_event_id=None):
     print('Processing:', file_path.name)
     rename_status, new_path = rename(file_path=file_path, new_stem=new_stem)
     if rename_status:
@@ -157,10 +173,12 @@ def process(file_path=None, new_stem=None, uuid=None ,barcode=None, barcodes=Non
         print('log success:', barcode)
         # TODO log derivative_file_uuid and arch_file_uuid into file_uuid and derived_from_file
         log_file_data(
-            batch_id=batch_id, batch_path=batch_path, batch_flags=batch_flags,
-            image_event_id=image_event_id, barcode=barcode, barcodes=barcodes,
+            batch_id=batch_id, batch_path=batch_path, batch_flags=batch_flags, # from global vars
+            image_event_id=image_event_id,
+            barcode=barcode, barcodes=barcodes,
             image_path=file_path, new_path=new_path,
-            file_uuid=None, derived_from_file=None)
+            file_uuid=None,
+            derived_from_file=derived_from_file, derived_from_uuid=derived_from_uuid)
     else:
         # TODO log fail
         print('log fail')
@@ -189,7 +207,7 @@ def rename(file_path=None, new_stem=None):
                 # Possible problem with character in new filename
                 print('ALERT - OSError. new_path:', new_path, 'file_path:', file_path )
                 return False, None
-            except Error as e:
+            except Exception as e:
                 print("Unexpected error:", e)
                 raise
 
@@ -211,7 +229,6 @@ def get_barcodes(file_path=None):
         return None
 
 def walk(path=None):
-    scan_start_time = datetime.now()
     for root, dirs, files in os.walk(path):
         for file in files:
             # files_analyzed += 1
@@ -222,7 +239,6 @@ def walk(path=None):
                 barcodes = get_barcodes(file_path=file_path)
                 if barcodes:
                     file_stem = file_path.stem
-                    #print(file_stem)
                     # find archive files matching stem
                     arch_file_path = None
                     for archive_extension in ARCHIVE_FILE_TYPES:
@@ -247,11 +263,25 @@ def walk(path=None):
 
                     # process JPEG
                     # TODO add derived from uuid
-                    process(file_path=file_path, new_stem=barcode, uuid=derivative_file_uuid ,barcode=barcode, barcodes=barcodes, image_event_id=image_event_id)
+                    process(
+                        file_path=file_path,
+                        new_stem=barcode,
+                        uuid=derivative_file_uuid,
+                        derived_from_uuid=arch_file_uuid,
+                        derived_from_file=arch_file_path,
+                        barcode=barcode,
+                        barcodes=barcodes,
+                        image_event_id=image_event_id)
                     # process archival
-                    process(file_path=arch_file_path, new_stem=barcode, uuid=arch_file_uuid, barcode=barcode, barcodes=barcodes, image_event_id=image_event_id)
-
-# old()
+                    process(
+                        file_path=arch_file_path,
+                        new_stem=barcode,
+                        uuid=arch_file_uuid,
+                        derived_from_uuid=None,
+                        derived_from_file=None,
+                        barcode=barcode,
+                        barcodes=barcodes,
+                        image_event_id=image_event_id)
 
 print('walking:', batch_path)
 walk(path=batch_path)
@@ -267,4 +297,4 @@ print('Files analyzed:', files_analyzed)
 print('Duration:', analysis_end_time - analysis_start_time)
 if files_analyzed > 0:
     print('Time per file:', (analysis_end_time - analysis_start_time)/files_analyzed)
-print('Report written to:', log_file_name)
+print('Report written to:', log_file_path)
