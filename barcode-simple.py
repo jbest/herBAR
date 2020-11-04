@@ -109,6 +109,8 @@ ap.add_argument("-o", "--output", required=False,
     help="Path to the directory where log file is written.")
 ap.add_argument("-n", "--no_rename", required=False, action='store_true',
     help="Files will not be renamed, only log file generated.")
+ap.add_argument("-c", "--code", required=False,
+    help="Collection or herbarium code prepended to barcode values.")
 args = vars(ap.parse_args())
 
 analysis_start_time = datetime.now()
@@ -116,6 +118,8 @@ batch_id = str(uuid.uuid4())
 batch_path = os.path.realpath(args["source"])
 project_id = args["project"]
 no_rename = args["no_rename"]
+prepend_code = args["code"]
+print('prepend_code', prepend_code)
 
 if args["batch"]:
     batch_flags = args["batch"]
@@ -165,6 +169,8 @@ def process(
     datetime_analyzed = datetime.now()
 
     #rename_status, new_path = rename(file_path=file_path, new_stem=new_stem)
+    if prepend_code:
+        new_stem = prepend_code + new_stem
     rename_result = rename(file_path=file_path, new_stem=new_stem)
     #print('rename_result:', rename_result)
     #if rename_status:
