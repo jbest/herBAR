@@ -87,7 +87,7 @@ def log_file_data(
         barcodes = ''
     # TODO log batch flags, barcode
     log_writer.writerow({
-        'batch_id': batch_id, 'batch_path': batch_path,
+        'batch_id': batch_id, 'batch_path': batch_path, 'batch_flags': batch_flags,
         'project_id': project_id, 'image_event_id': image_event_id,
         'datetime_analyzed': datetime_analyzed,
         'image_path': image_path, 'basename': basename, 'file_name': file_name,
