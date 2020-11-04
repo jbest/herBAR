@@ -73,6 +73,7 @@ def log_file_data(
     image_event_id=None,
     barcodes=None,
     barcode=None,
+    status=None,
     datetime_analyzed=None,
     image_path=None, new_path=None,
     file_uuid=None, file_creation_time=None, file_hash=None,
@@ -91,7 +92,7 @@ def log_file_data(
         'project_id': project_id, 'image_event_id': image_event_id,
         'datetime_analyzed': datetime_analyzed,
         'image_path': image_path, 'basename': basename, 'file_name': file_name,
-        'new_path': new_path,
+        'status': status, 'new_path': new_path,
         'file_creation_time': file_creation_time,
         'file_hash': file_hash, 'file_uuid': file_uuid,
         'derived_from_file': derived_from_file, 'derived_from_uuid': derived_from_uuid,
@@ -143,6 +144,7 @@ csvfile = open(log_file_path, 'w', newline='')
 fieldnames = [
     'batch_id', 'batch_path', 'batch_flags', 'project_id',
     'image_event_id', 'datetime_analyzed', 'barcodes', 'barcode',
+    'status',
     'image_path', 'basename', 'file_name', 'new_path',
     'file_creation_time',
     'file_hash', 'file_uuid', 'derived_from_file', 'derived_from_uuid']
@@ -182,12 +184,21 @@ def process(
             image_event_id=image_event_id,
             datetime_analyzed=datetime_analyzed,
             barcode=barcode, barcodes=barcodes,
+            status='renamed',
             image_path=file_path, new_path=new_path,
             file_uuid=uuid, file_creation_time=file_creation_time, file_hash=file_hash,
             derived_from_file=derived_from_file, derived_from_uuid=derived_from_uuid)
     else:
-        # TODO log fail
         print('Rename failed:', file_path)
+        log_file_data(
+            batch_id=batch_id, batch_path=batch_path, batch_flags=batch_flags, # from global vars
+            image_event_id=image_event_id,
+            datetime_analyzed=datetime_analyzed,
+            barcode=barcode, barcodes=barcodes,
+            status='failed',
+            image_path=file_path, new_path=None,
+            file_uuid=uuid, file_creation_time=file_creation_time, file_hash=file_hash,
+            derived_from_file=derived_from_file, derived_from_uuid=derived_from_uuid)
 
 def rename(file_path=None, new_stem=None):
     parent_path = file_path.parent
