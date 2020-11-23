@@ -26,10 +26,15 @@ def md5hash(fname):
     # using this approach to ensure larger files can be read into memory
     #hash_md5 = hashlib.md5()
     hash_md5 = md5()
-    with open(fname, "rb") as f:
-        for chunk in iter(lambda: f.read(4096), b""):
-            hash_md5.update(chunk)
-    return hash_md5.hexdigest()
+    try:
+        with open(fname, "rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                hash_md5.update(chunk)
+        return hash_md5.hexdigest()
+    except OSError as e:
+        print('ERROR:', e)
+        return None
+
 
 def creation_date(path_to_file):
     # From https://stackoverflow.com/a/39501288
@@ -275,6 +280,9 @@ def walk(path=None):
                     image_event_id = str(uuid.uuid4())
                     arch_file_uuid = str(uuid.uuid4())
                     derivative_file_uuid = str(uuid.uuid4())
+                    
+                    for barcode in barcodes:
+                        print(barcode)
                     # assume first barcode
                     # TODO check barcode pattern
                     barcode = barcodes[0]['data']
