@@ -270,9 +270,10 @@ def walk(path=None):
                     file_stem = file_path.stem
                     # find archive files matching stem
                     arch_file_path = None
+
                     for archive_extension in ARCHIVE_FILE_TYPES:
                         potential_arch_file_name = file_stem + archive_extension
-                        potential_arch_file_path_string = os.path.join(directory_path, potential_arch_file_name)
+                        potential_arch_file_path_string = os.path.join(file_path.parent, potential_arch_file_name)
                         potential_arch_file_path = Path(potential_arch_file_path_string)
                         # test if archive file exists
                         # TODO change filename comparison to be case-sensitive
