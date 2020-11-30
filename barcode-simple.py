@@ -80,6 +80,7 @@ def log_file_data(
     barcodes=None,
     barcode=None,
     status=None,
+    status_details=None,
     datetime_analyzed=None,
     image_path=None, new_path=None,
     file_uuid=None, file_creation_time=None, file_hash=None,
@@ -98,7 +99,7 @@ def log_file_data(
         'project_id': project_id, 'image_event_id': image_event_id,
         'datetime_analyzed': datetime_analyzed,
         'image_path': image_path, 'basename': basename, 'file_name': file_name,
-        'status': status, 'new_path': new_path,
+        'status': status, 'status_details': status_details, 'new_path': new_path,
         'file_creation_time': file_creation_time,
         'file_hash': file_hash, 'file_uuid': file_uuid,
         'derived_from_file': derived_from_file, 'derived_from_uuid': derived_from_uuid,
@@ -180,6 +181,7 @@ def process(
     if prepend_code:
         new_stem = prepend_code + new_stem
     rename_result = rename(file_path=file_path, new_stem=new_stem)
+    status_details = rename_result['details']
     #print('rename_result:', rename_result)
     #if rename_status:
     if rename_result['success']:
@@ -190,7 +192,7 @@ def process(
             image_event_id=image_event_id,
             datetime_analyzed=datetime_analyzed,
             barcode=barcode, barcodes=barcodes,
-            status='renamed',
+            status='renamed', status_details=status_details,
             image_path=file_path, new_path=new_path,
             file_uuid=uuid, file_creation_time=file_creation_time, file_hash=file_hash,
             derived_from_file=derived_from_file, derived_from_uuid=derived_from_uuid)
@@ -201,7 +203,7 @@ def process(
             image_event_id=image_event_id,
             datetime_analyzed=datetime_analyzed,
             barcode=barcode, barcodes=barcodes,
-            status='failed',
+            status='failed', status_details=status_details,
             image_path=file_path, new_path=None,
             file_uuid=uuid, file_creation_time=file_creation_time, file_hash=file_hash,
             derived_from_file=derived_from_file, derived_from_uuid=derived_from_uuid)
@@ -217,22 +219,22 @@ def rename(file_path=None, new_stem=None):
             print('ALERT - file exists, can not overwrite:')
             print(new_path)
             #return False, None
-            return{'success': False, 'new_path': None}
+            return{'success': False, 'details': 'file name exists', 'new_path': None}
         else:
             try:
                 if no_rename:
                     # don't rename but return True to simulate for logging
                     #return True, file_path
-                    return{'success': True, 'new_path': file_path}
+                    return{'success': True, 'details': 'dry-run - file not renamed', 'new_path': file_path}
                 else:
                     file_path.rename(new_path)
                     #return True, new_path
-                    return{'success': True, 'new_path': new_path}
+                    return{'success': True, 'details': None, 'new_path': new_path}
             except OSError:
                 # Possible problem with character in new filename
                 print('ALERT - OSError. new_path:', new_path, 'file_path:', file_path )
                 #return False, None
-                return{'success': False, 'new_path': None}
+                return{'success': False, 'details': 'file not renamed, possible problem character in path', 'new_path': None}
             except Exception as e:
                 print("Unexpected error:", e)
                 raise
@@ -281,7 +283,7 @@ def walk(path=None):
                     image_event_id = str(uuid.uuid4())
                     arch_file_uuid = str(uuid.uuid4())
                     derivative_file_uuid = str(uuid.uuid4())
-                    
+
                     for barcode in barcodes:
                         print(barcode)
                     # assume first barcode
@@ -312,7 +314,28 @@ def walk(path=None):
                             image_event_id=image_event_id)
                     else:
                         print('archival file not found for:', file_path)
-
+                        datetime_analyzed = datetime.now()
+                        log_file_data(
+                            batch_id=batch_id, batch_path=batch_path, batch_flags=batch_flags, # from global vars
+                            image_event_id=None,
+                            datetime_analyzed=datetime_analyzed,
+                            barcode=None, barcodes=None,
+                            status='failed', status_details='missing archival file',
+                            image_path=file_path, new_path=None,
+                            )
+                else:
+                    # no barcodes found
+                    datetime_analyzed = datetime.now()
+                    log_file_data(
+                        batch_id=batch_id, batch_path=batch_path, batch_flags=batch_flags, # from global vars
+                        image_event_id=None,
+                        datetime_analyzed=datetime_analyzed,
+                        barcode=None, barcodes=None,
+                        status='failed', status_details='no barcodes found',
+                        image_path=file_path, new_path=None,
+                        #file_uuid=uuid, file_creation_time=file_creation_time, file_hash=file_hash,
+                        #derived_from_file=derived_from_file, derived_from_uuid=derived_from_uuid
+                        )
 print('walking:', batch_path)
 walk(path=batch_path)
 
