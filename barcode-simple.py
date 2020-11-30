@@ -14,12 +14,13 @@ from pyzbar.pyzbar import decode
 # File extensions that are scanned and logged
 INPUT_FILE_TYPES = ['.jpg', '.jpeg', '.JPG', '.JPEG']
 # File type extensions that are logged when filename matches a scanned input file
-ARCHIVE_FILE_TYPES = ['.CR2', '.cr2', '.RAW', '.raw', '.NEF', '.nef']
+ARCHIVE_FILE_TYPES = ['.CR2', '.cr2', '.RAW', '.raw', '.NEF', '.nef', '.DNG', '.dng']
 # Barcode symbologies accepted, others ignored
 ACCEPTED_SYMBOLOGIES = ['CODE39']
 # TODO add accepted barcode string patterns
 FIELD_DELIMITER = ','  # delimiter used in output CSV
 PROJECT_IDS = ['TX', 'ANHC', 'VDB', 'TEST', 'Ferns', 'TORCH', 'EF']
+
 
 def md5hash(fname):
     # from https://stackoverflow.com/questions/3431825/generating-an-md5-checksum-of-a-file
@@ -149,7 +150,7 @@ csvfile = open(log_file_path, 'w', newline='')
 fieldnames = [
     'batch_id', 'batch_path', 'batch_flags', 'project_id',
     'image_event_id', 'datetime_analyzed', 'barcodes', 'barcode',
-    'status',
+    'status', 'status_details',
     'image_path', 'basename', 'file_name', 'new_path',
     'file_creation_time',
     'file_hash', 'file_uuid', 'derived_from_file', 'derived_from_uuid']
