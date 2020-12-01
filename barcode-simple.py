@@ -119,6 +119,8 @@ ap.add_argument("-n", "--no_rename", required=False, action='store_true',
     help="Files will not be renamed, only log file generated.")
 ap.add_argument("-c", "--code", required=False,
     help="Collection or herbarium code prepended to barcode values.")
+ap.add_argument("-v", "--verbose", required=False, action='store_true',
+    help="Detailed output for each file processed.")
 args = vars(ap.parse_args())
 
 analysis_start_time = datetime.now()
@@ -127,11 +129,13 @@ batch_path = os.path.realpath(args["source"])
 project_id = args["project"]
 no_rename = args["no_rename"]
 prepend_code = args["code"]
-print('prepend_code', prepend_code)
+verbose = args["verbose"]
+#print('prepend_code', prepend_code)
 
 if args["batch"]:
     batch_flags = args["batch"]
-    print('Batch flags:', batch_flags)
+    if verbose:
+        print('Batch flags:', batch_flags)
 else:
     batch_flags = None
 
@@ -221,8 +225,7 @@ def rename(file_path=None, new_stem=None):
 
     if file_path.exists():
         if new_path.exists():
-            print('ALERT - file exists, can not overwrite:')
-            print(new_path)
+            print('ALERT - file exists, can not overwrite:', new_path)
             #return False, None
             return{'success': False, 'details': 'file name exists', 'new_path': None}
         else:
@@ -255,7 +258,8 @@ def get_barcodes(file_path=None):
                 symbology_type = str(barcode.type)
                 data = barcode.data.decode('UTF-8')
                 matching_barcodes.append({'type':symbology_type, 'data':data})
-                print(symbology_type, data)
+                if verbose:
+                    print(symbology_type, data)
         return matching_barcodes
     else:
         print('No barcodes found:', file_path)
@@ -290,8 +294,6 @@ def walk(path=None):
                     arch_file_uuid = str(uuid.uuid4())
                     derivative_file_uuid = str(uuid.uuid4())
 
-                    for barcode in barcodes:
-                        print(barcode)
                     # assume first barcode
                     # TODO check barcode pattern
                     barcode = barcodes[0]['data']
@@ -354,8 +356,8 @@ analysis_end_time = datetime.now()
 print('Started:', analysis_start_time)
 print('Completed:', analysis_end_time)
 print('Files analyzed:', files_analyzed)
-print('Renames failed:', renames_failed, renames_failed/files_analyzed)
-print('Missing barcodes:', missing_barcodes, missing_barcodes/files_analyzed)
+print('Renames failed:', renames_failed, '({:.1%})'.format(renames_failed/files_analyzed))
+print('Missing barcodes:', missing_barcodes, '({:.1%})'.format(missing_barcodes/files_analyzed))
 print('Duration:', analysis_end_time - analysis_start_time)
 if files_analyzed > 0:
     print('Time per file:', (analysis_end_time - analysis_start_time) / files_analyzed)
