@@ -166,6 +166,7 @@ log_writer.writeheader()
 
 directory_path = os.path.realpath(args["source"])
 files_analyzed = 0
+files_processed = 0
 renames_failed = 0
 missing_barcodes = 0
 
@@ -178,7 +179,8 @@ def process(
     derived_from_file=None, derived_from_uuid=None,
     barcode=None, barcodes=None,
     image_event_id=None):
-    global renames_failed
+    global renames_failed, files_processed
+    files_processed += 1
     # Get file creation time
     file_creation_time = datetime.fromtimestamp(creation_date(file_path))
     # generate MD5 hash
@@ -266,10 +268,11 @@ def get_barcodes(file_path=None):
         return None
 
 def walk(path=None):
-    global files_analyzed, renames_failed, missing_barcodes
+    global files_analyzed, renames_failed, missing_barcodes, files_processed
     for root, dirs, files in os.walk(path):
         for file in files:
             files_analyzed += 1
+            #print('increment file count:', file)
             file_path_string = os.path.join(root, file)
             file_path = Path(file_path_string)
             if file_path.suffix in INPUT_FILE_TYPES:
@@ -345,7 +348,7 @@ def walk(path=None):
                         #file_uuid=uuid, file_creation_time=file_creation_time, file_hash=file_hash,
                         #derived_from_file=derived_from_file, derived_from_uuid=derived_from_uuid
                         )
-print('walking:', batch_path)
+print('scanning:', batch_path)
 walk(path=batch_path)
 
 # Close CSV log file
@@ -356,7 +359,8 @@ analysis_end_time = datetime.now()
 print('Started:', analysis_start_time)
 print('Completed:', analysis_end_time)
 print('Files analyzed:', files_analyzed)
-print('Renames failed:', renames_failed, '({:.1%})'.format(renames_failed/files_analyzed))
+print('Files processed:', files_processed)
+print('Renames failed:', renames_failed, '({:.1%})'.format(renames_failed/files_processed))
 print('Missing barcodes:', missing_barcodes, '({:.1%})'.format(missing_barcodes/files_analyzed))
 print('Duration:', analysis_end_time - analysis_start_time)
 if files_analyzed > 0:
