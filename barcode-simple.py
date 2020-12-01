@@ -300,6 +300,9 @@ def walk(path=None):
                     # assume first barcode
                     # TODO check barcode pattern
                     barcode = barcodes[0]['data']
+                    if len(barcodes) > 1:
+                        print('ALERT - multiple barcodes found. Using only first barcode of', len(barcodes))
+                        print('ALERT - multiple barcodes in file:', file_path)
 
                     # process JPEG
                     # TODO add derived from uuid
