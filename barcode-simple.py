@@ -162,6 +162,9 @@ log_writer.writeheader()
 
 directory_path = os.path.realpath(args["source"])
 files_analyzed = 0
+renames_failed = 0
+missing_barcodes = 0
+
 print('Scanning directory:', directory_path)
 #TODO change image search to use INPUT_FILE_TYPES
 
@@ -171,6 +174,7 @@ def process(
     derived_from_file=None, derived_from_uuid=None,
     barcode=None, barcodes=None,
     image_event_id=None):
+    global renames_failed
     # Get file creation time
     file_creation_time = datetime.fromtimestamp(creation_date(file_path))
     # generate MD5 hash
@@ -198,6 +202,7 @@ def process(
             derived_from_file=derived_from_file, derived_from_uuid=derived_from_uuid)
     else:
         print('Rename failed:', file_path)
+        renames_failed += 1
         log_file_data(
             batch_id=batch_id, batch_path=batch_path, batch_flags=batch_flags, # from global vars
             image_event_id=image_event_id,
@@ -257,7 +262,7 @@ def get_barcodes(file_path=None):
         return None
 
 def walk(path=None):
-    global files_analyzed
+    global files_analyzed, renames_failed, missing_barcodes
     for root, dirs, files in os.walk(path):
         for file in files:
             files_analyzed += 1
@@ -326,6 +331,7 @@ def walk(path=None):
                             )
                 else:
                     # no barcodes found
+                    missing_barcodes += 1
                     datetime_analyzed = datetime.now()
                     log_file_data(
                         batch_id=batch_id, batch_path=batch_path, batch_flags=batch_flags, # from global vars
@@ -348,6 +354,8 @@ analysis_end_time = datetime.now()
 print('Started:', analysis_start_time)
 print('Completed:', analysis_end_time)
 print('Files analyzed:', files_analyzed)
+print('Renames failed:', renames_failed, renames_failed/files_analyzed)
+print('Missing barcodes:', missing_barcodes, missing_barcodes/files_analyzed)
 print('Duration:', analysis_end_time - analysis_start_time)
 if files_analyzed > 0:
     print('Time per file:', (analysis_end_time - analysis_start_time) / files_analyzed)
