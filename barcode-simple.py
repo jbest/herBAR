@@ -325,6 +325,7 @@ def walk(path=None):
                             image_event_id=image_event_id)
                     else:
                         print('archival file not found for:', file_path)
+                        files_processed += 1 # not actually processed, but incremented for stats
                         datetime_analyzed = datetime.now()
                         log_file_data(
                             batch_id=batch_id, batch_path=batch_path, batch_flags=batch_flags, # from global vars
@@ -337,6 +338,7 @@ def walk(path=None):
                 else:
                     # no barcodes found
                     missing_barcodes += 1
+                    files_processed += 1 # not actually processed, but incremented for stats
                     datetime_analyzed = datetime.now()
                     log_file_data(
                         batch_id=batch_id, batch_path=batch_path, batch_flags=batch_flags, # from global vars
