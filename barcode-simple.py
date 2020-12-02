@@ -167,6 +167,7 @@ log_writer.writeheader()
 directory_path = os.path.realpath(args["source"])
 files_analyzed = 0
 files_processed = 0
+renames_attempted = 0
 renames_failed = 0
 missing_barcodes = 0
 
@@ -179,7 +180,7 @@ def process(
     derived_from_file=None, derived_from_uuid=None,
     barcode=None, barcodes=None,
     image_event_id=None):
-    global renames_failed, files_processed
+    global renames_failed, renames_attempted, files_processed
     files_processed += 1
     # Get file creation time
     file_creation_time = datetime.fromtimestamp(creation_date(file_path))
@@ -191,6 +192,7 @@ def process(
     if prepend_code:
         new_stem = prepend_code + new_stem
     rename_result = rename(file_path=file_path, new_stem=new_stem)
+    renames_attempted += 1
     status_details = rename_result['details']
     #print('rename_result:', rename_result)
     #if rename_status:
@@ -328,7 +330,7 @@ def walk(path=None):
                             image_event_id=image_event_id)
                     else:
                         print('archival file not found for:', file_path)
-                        files_processed += 1 # not actually processed, but incremented for stats
+                        #files_processed += 1 # not actually processed, but incremented for stats
                         datetime_analyzed = datetime.now()
                         log_file_data(
                             batch_id=batch_id, batch_path=batch_path, batch_flags=batch_flags, # from global vars
@@ -363,9 +365,12 @@ analysis_end_time = datetime.now()
 
 print('Started:', analysis_start_time)
 print('Completed:', analysis_end_time)
+# files_analyzed is the total number of files encountered in directory which is scanned
 print('Files analyzed:', files_analyzed)
+# files_processed is number of files which match the expected extensions for image files
 print('Files processed:', files_processed)
-print('Renames failed:', renames_failed, '({:.1%})'.format(renames_failed/files_processed))
+print('Renames attempted:', renames_attempted)
+print('Renames failed:', renames_failed, '({:.1%})'.format(renames_failed/renames_attempted))
 print('Missing barcodes:', missing_barcodes, '({:.1%})'.format(missing_barcodes/files_analyzed))
 print('Duration:', analysis_end_time - analysis_start_time)
 if files_analyzed > 0:
