@@ -150,14 +150,14 @@ else:
 # Create file for results
 log_file_name = analysis_start_time.date().isoformat() + '_' + batch_id + '.csv'
 # Test output path
-if output_location = 'primary':
-	#TODO explicitly get script directory
-	log_file_path = log_file_name
-elif output_location = 'secondary':
-	output_directory = os.path.realpath(args["source"])
-	log_file_path = os.path.join(output_directory, log_file_name)
+if output_location == 'primary':
+    #TODO explicitly get script directory
+    log_file_path = log_file_name
+elif output_location == 'secondary':
+    output_directory = os.path.realpath(args["source"])
+    log_file_path = os.path.join(output_directory, log_file_name)
 else:
-	output_directory = os.path.realpath(output_location)
+    output_directory = os.path.realpath(output_location)
     #TODO make sure directory exists and is writeable
     log_file_path = os.path.join(output_directory, log_file_name)
 
