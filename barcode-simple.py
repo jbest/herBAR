@@ -138,7 +138,8 @@ prepend_code = args["code"]
 verbose = args["verbose"]
 output_location = args["output"]
 jpeg_rename = args["jpeg_rename"]
-print('prepend_code', prepend_code)
+#print('prepend_code', prepend_code)
+print('jpeg_rename', jpeg_rename)
 
 if args["batch"]:
     batch_flags = args["batch"]
@@ -318,16 +319,17 @@ def walk(path=None):
                     if len(barcodes) > 1:
                         print('ALERT - multiple barcodes found. Using only first barcode of', len(barcodes))
                         print('ALERT - multiple barcodes in file:', file_path)
-
                     # process JPEG
                     if jpeg_rename:
                         # prepend JPEG string
-                        file_stem = jpeg_rename + '_' + file_stem
+                        jpeg_stem = jpeg_rename + '_' + barcode
+                    else:
+                        jpeg_stem = barcode
                         #pass
                     # TODO add derived from uuid
                     process(
                         file_path=file_path,
-                        new_stem=barcode,
+                        new_stem=jpeg_stem,
                         uuid=derivative_file_uuid,
                         derived_from_uuid=arch_file_uuid,
                         derived_from_file=arch_file_path,
