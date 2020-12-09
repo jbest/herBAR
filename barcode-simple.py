@@ -20,7 +20,8 @@ ACCEPTED_SYMBOLOGIES = ['CODE39']
 # TODO add accepted barcode string patterns
 FIELD_DELIMITER = ','  # delimiter used in output CSV
 PROJECT_IDS = ['TX', 'ANHC', 'VDB', 'TEST', 'Ferns', 'TORCH', 'EF']
-
+JPG_RENAME_STRING = 'unprocessed' # string optionally added to JPG file names
+# this allows downstream processing to generate a new JPG from the raw file without name conflicts
 
 def md5hash(fname):
     # from https://stackoverflow.com/questions/3431825/generating-an-md5-checksum-of-a-file
@@ -124,6 +125,8 @@ ap.add_argument("-c", "--code", required=False,
     help="Collection or herbarium code prepended to barcode values.")
 ap.add_argument("-v", "--verbose", required=False, action='store_true',
     help="Detailed output for each file processed.")
+ap.add_argument("-j", "--jpeg_rename", nargs='?', default=False, const=JPG_RENAME_STRING,
+    help="String will be added to JPEG file names to prevent name conflicts downstream.")
 args = vars(ap.parse_args())
 
 analysis_start_time = datetime.now()
@@ -134,6 +137,7 @@ no_rename = args["no_rename"]
 prepend_code = args["code"]
 verbose = args["verbose"]
 output_location = args["output"]
+jpeg_rename = args["jpeg_rename"]
 print('prepend_code', prepend_code)
 
 if args["batch"]:
@@ -151,13 +155,14 @@ if output_location == 'primary':
     log_file_path = log_file_name
 elif output_location == 'secondary':
     output_directory = os.path.realpath(args["source"])
+    print('output_directory:', output_directory)
     log_file_path = os.path.join(output_directory, log_file_name)
 else:
     output_directory = os.path.realpath(output_location)
-    #TODO make sure directory exists and is writeable
+    print('output_directory:', output_directory)
+    #TODO make sure directory exists and is writeable, otherwise, fall back to primary location
     log_file_path = os.path.join(output_directory, log_file_name)
 
-print('output_directory:', output_directory)
 csvfile = open(log_file_path, 'w', newline='')
 # write header
 fieldnames = [
@@ -315,6 +320,10 @@ def walk(path=None):
                         print('ALERT - multiple barcodes in file:', file_path)
 
                     # process JPEG
+                    if jpeg_rename:
+                        # prepend JPEG string
+                        file_stem = jpeg_rename + '_' + file_stem
+                        #pass
                     # TODO add derived from uuid
                     process(
                         file_path=file_path,
