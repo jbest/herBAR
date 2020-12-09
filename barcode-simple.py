@@ -113,8 +113,11 @@ ap.add_argument("-p", "--project", required=False, choices=PROJECT_IDS,
     help="Project name for filtering in database")
 ap.add_argument("-b", "--batch", required=False,
     help="Flags written to batch_flags, can be used for filtering downstream data.")
-ap.add_argument("-o", "--output", required=False,
-    help="Path to the directory where log file is written.")
+ap.add_argument("-o", "--output", nargs='?', default='primary', const='secondary',
+    help="Path to the directory where log file is written. \
+    By default (no -o switch used) log will be written to location of script. \
+    If just the -o switch is used, log is written to directory indicated in source argument. \
+    An absolute or relative path may also be provided.")
 ap.add_argument("-n", "--no_rename", required=False, action='store_true',
     help="Files will not be renamed, only log file generated.")
 ap.add_argument("-c", "--code", required=False,
@@ -127,6 +130,7 @@ batch_path = os.path.realpath(args["source"])
 project_id = args["project"]
 no_rename = args["no_rename"]
 prepend_code = args["code"]
+output_location = args["output"]
 print('prepend_code', prepend_code)
 
 if args["batch"]:
@@ -138,14 +142,18 @@ else:
 # Create file for results
 log_file_name = analysis_start_time.date().isoformat() + '_' + batch_id + '.csv'
 # Test output path
-if args["output"] is not None:
-    output_directory = os.path.realpath(args["output"])
-    print('output_directory:', output_directory)
+if output_location = 'primary':
+	#TODO explicitly get script directory
+	log_file_path = log_file_name
+elif output_location = 'secondary':
+	output_directory = os.path.realpath(args["source"])
+	log_file_path = os.path.join(output_directory, log_file_name)
+else:
+	output_directory = os.path.realpath(output_location)
     #TODO make sure directory exists and is writeable
     log_file_path = os.path.join(output_directory, log_file_name)
-else:
-    log_file_path = log_file_name
 
+print('output_directory:', output_directory)
 csvfile = open(log_file_path, 'w', newline='')
 # write header
 fieldnames = [
