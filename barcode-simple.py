@@ -132,13 +132,9 @@ batch_path = os.path.realpath(args["source"])
 project_id = args["project"]
 no_rename = args["no_rename"]
 prepend_code = args["code"]
-<<<<<<< HEAD
 verbose = args["verbose"]
-#print('prepend_code', prepend_code)
-=======
 output_location = args["output"]
 print('prepend_code', prepend_code)
->>>>>>> 81d22dcfccb9e0a1847c6162c4b1607fcf41c4d2
 
 if args["batch"]:
     batch_flags = args["batch"]
