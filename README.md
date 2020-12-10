@@ -1,6 +1,20 @@
 # herBAR
 A barcode renamer for herbarium specimens
 
+### Requirements
+
+Python 3.*  
+Pillow  
+zbar  
+
+### Installation
+
+Download the script file to your local computer and install the required modules.
+To install modules, use pip:
+
+	pip install -r requirements.txt
+
+### Usage
 
 	usage: barcode-simple.py [-h] -s SOURCE [-p {TX,ANHC,VDB,TEST,Ferns,TORCH,EF}]
 	                         [-b BATCH] [-o [OUTPUT]] [-n] [-c CODE] [-v]
