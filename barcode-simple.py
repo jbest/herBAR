@@ -139,7 +139,6 @@ verbose = args["verbose"]
 output_location = args["output"]
 jpeg_rename = args["jpeg_rename"]
 #print('prepend_code', prepend_code)
-print('jpeg_rename', jpeg_rename)
 
 if args["batch"]:
     batch_flags = args["batch"]
@@ -148,17 +147,20 @@ if args["batch"]:
 else:
     batch_flags = None
 
-# Create file for results
+# Create log file for results
 log_file_name = analysis_start_time.date().isoformat() + '_' + batch_id + '.csv'
-# Test output path
+# Create and test log output path
 if output_location == 'primary':
+    # No alternative log path specified (uses script path)
     #TODO explicitly get script directory
     log_file_path = log_file_name
 elif output_location == 'secondary':
+    # Alternative path specified implicitly (uses source directory path)
     output_directory = os.path.realpath(args["source"])
     print('output_directory:', output_directory)
     log_file_path = os.path.join(output_directory, log_file_name)
 else:
+    # Explicit alternative path specified
     output_directory = os.path.realpath(output_location)
     print('output_directory:', output_directory)
     #TODO make sure directory exists and is writeable, otherwise, fall back to primary location
@@ -176,17 +178,12 @@ fieldnames = [
 log_writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 log_writer.writeheader()
 
-#TODO extract information from directory name (imager, station, etc)
-
 directory_path = os.path.realpath(args["source"])
 files_analyzed = 0
 files_processed = 0
 renames_attempted = 0
 renames_failed = 0
 missing_barcodes = 0
-
-print('Scanning directory:', directory_path)
-#TODO change image search to use INPUT_FILE_TYPES
 
 def process(
     file_path=None, new_stem=None,
