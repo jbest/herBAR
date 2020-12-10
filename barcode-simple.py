@@ -319,7 +319,7 @@ def walk(path=None):
                     # process JPEG
                     if jpeg_rename:
                         # prepend JPEG string
-                        jpeg_stem = jpeg_rename + '_' + barcode
+                        jpeg_stem = barcode  + '_' + jpeg_rename
                     else:
                         jpeg_stem = barcode
                         #pass
