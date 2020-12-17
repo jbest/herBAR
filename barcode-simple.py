@@ -330,6 +330,7 @@ def walk(path=None):
                         jpeg_stem = barcode + multi_string
                         #pass
                     # TODO add derived from uuid
+                    archival_stem = barcode + multi_string
                     process(
                         file_path=file_path,
                         new_stem=jpeg_stem,
@@ -343,7 +344,7 @@ def walk(path=None):
                         # process archival
                         process(
                             file_path=arch_file_path,
-                            new_stem=barcode,
+                            new_stem=archival_stem,
                             uuid=arch_file_uuid,
                             derived_from_uuid=None,
                             derived_from_file=None,
