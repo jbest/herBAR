@@ -312,16 +312,22 @@ def walk(path=None):
 
                     # assume first barcode
                     # TODO check barcode pattern
+                    # Get first barcode value for file name
                     barcode = barcodes[0]['data']
                     if len(barcodes) > 1:
+                        print(barcodes)
+                        barcode_values = [b['data'] for b in barcodes]
+                        multi_string = 'MULTI[' + '|'.join(barcode_values) + ']'
                         print('ALERT - multiple barcodes found. Using only first barcode of', len(barcodes))
-                        print('ALERT - multiple barcodes in file:', file_path)
+                        #print('ALERT - multiple barcodes in file:', file_path)
+                    else:
+                        multi_string = ''
                     # process JPEG
                     if jpeg_rename:
                         # prepend JPEG string
-                        jpeg_stem = barcode  + '_' + jpeg_rename
+                        jpeg_stem = barcode + multi_string  + '_' + jpeg_rename
                     else:
-                        jpeg_stem = barcode
+                        jpeg_stem = barcode + multi_string
                         #pass
                     # TODO add derived from uuid
                     process(
