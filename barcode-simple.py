@@ -79,7 +79,7 @@ def casedpath(path):
 
 def get_unique_path(path=None, qualifiers=UNIQUE_QUALIFIERS):
     if path.exists():
-        print('path exists:', path)
+        #print('path exists:', path)
         # get stem
         stem = path.stem
         suffix = path.suffix
@@ -87,11 +87,11 @@ def get_unique_path(path=None, qualifiers=UNIQUE_QUALIFIERS):
         # remove previous qualifier
         if stem[-2:-1]=='_':
             original_stem = stem[:-2]
-            print('original_stem:',original_stem)
+            #print('original_stem:',original_stem)
             failed_qualifier = stem[-1:]
-            print('failed_qualifier:',failed_qualifier)
+            #print('failed_qualifier:',failed_qualifier)
             failed_qualifier_index = qualifiers.index(failed_qualifier)
-            print('failed_qualifier_index:',failed_qualifier_index)
+            #print('failed_qualifier_index:',failed_qualifier_index)
             try:
                 new_qualifier = qualifiers[failed_qualifier_index+1]
             except IndexError:
