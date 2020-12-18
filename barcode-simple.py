@@ -10,6 +10,7 @@ import platform
 from PIL import Image
 from pathlib import Path
 from pyzbar.pyzbar import decode
+import string
 
 # File extensions that are scanned and logged
 INPUT_FILE_TYPES = ['.jpg', '.jpeg', '.JPG', '.JPEG']
@@ -22,6 +23,7 @@ FIELD_DELIMITER = ','  # delimiter used in output CSV
 PROJECT_IDS = ['TX', 'ANHC', 'VDB', 'TEST', 'Ferns', 'TORCH', 'EF']
 JPG_RENAME_STRING = 'unprocessed' # string optionally added to JPG file names
 # this allows downstream processing to generate a new JPG from the raw file without name conflicts
+UNIQUE_QUALIFIERS = list(string.ascii_uppercase) # list of characters added to file names to make unique
 
 def md5hash(fname):
     # from https://stackoverflow.com/questions/3431825/generating-an-md5-checksum-of-a-file
@@ -74,6 +76,41 @@ def casedpath(path):
     # from https://stackoverflow.com/a/35229734
     r = glob.glob(re.sub(r'([^:/\\])(?=[/\\]|$)', r'[\1]', path))
     return r and r[0] or path
+
+def get_unique_path(path=None, qualifiers=UNIQUE_QUALIFIERS):
+    if path.exists():
+        print('path exists:', path)
+        # get stem
+        stem = path.stem
+        suffix = path.suffix
+        path_parent = path.parent
+        # remove previous qualifier
+        if stem[-2:-1]=='_':
+            original_stem = stem[:-2]
+            print('original_stem:',original_stem)
+            failed_qualifier = stem[-1:]
+            print('failed_qualifier:',failed_qualifier)
+            failed_qualifier_index = qualifiers.index(failed_qualifier)
+            print('failed_qualifier_index:',failed_qualifier_index)
+            try:
+                new_qualifier = qualifiers[failed_qualifier_index+1]
+            except IndexError:
+                # ran out of qualifiers
+                # using UUID instead
+                new_qualifier = str(uuid.uuid4())
+        else:
+            # No previous qualifier established
+            original_stem = stem
+            new_qualifier = qualifiers[0]
+
+        # add unique to stem
+        new_name = original_stem + '_' + new_qualifier + suffix
+        #new_path = Path(new_name)
+        new_path = path_parent / new_name
+        
+        return(get_unique_path(path=new_path, qualifiers=qualifiers))
+    else:
+        return path
 
 def log_file_data(
     batch_id=None, batch_path=None, batch_flags=None,
@@ -237,8 +274,15 @@ def rename(file_path=None, new_stem=None):
     file_extension = file_path.suffix
     new_file_name = new_stem + file_extension
     new_path = parent_path.joinpath(new_file_name)
+    # check if current filename is already correct
+    if file_path==new_path:
+        #print('Paths are same.')
+        return{'success': True, 'details': 'file already named correctly', 'new_path': new_path}
 
     if file_path.exists():
+        # generate unique filename for new path
+        new_path = get_unique_path(path=new_path)
+        # A last check to ensure it is unique
         if new_path.exists():
             print('ALERT - file exists, can not overwrite:', new_path)
             #return False, None
@@ -315,7 +359,7 @@ def walk(path=None):
                     # Get first barcode value for file name
                     barcode = barcodes[0]['data']
                     if len(barcodes) > 1:
-                        print(barcodes)
+                        #print(barcodes)
                         barcode_values = [b['data'] for b in barcodes]
                         multi_string = '_BARCODES[' + '|'.join(barcode_values) + ']'
                         print('ALERT - multiple barcodes found. Using only first barcode of', len(barcodes))
