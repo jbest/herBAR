@@ -1,16 +1,15 @@
 from pathlib import Path
 import string
+import uuid
 
-def get_unique_path(path=None, index=0, qualifiers=None):
+def get_unique_path(path=None, qualifiers=None):
     if path.exists():
+        print('path exists:', path)
         # get stem
-        failed_index = index
-        #failed_qualifier = '_' + str(failed_index)
-        index = index + 1
         stem = path.stem
         suffix = path.suffix
+        path_parent = path.parent
         # remove previous qualifier
-        #if stem.endswith(failed_qualifier):
         if stem[-2:-1]=='_':
             original_stem = stem[:-2]
             print('original_stem:',original_stem)
@@ -18,24 +17,30 @@ def get_unique_path(path=None, index=0, qualifiers=None):
             print('failed_qualifier:',failed_qualifier)
             failed_qualifier_index = qualifiers.index(failed_qualifier)
             print('failed_qualifier_index:',failed_qualifier_index)
-            new_qualifier = qualifiers[failed_qualifier_index+1]
+            try:
+                new_qualifier = qualifiers[failed_qualifier_index+1]
+            except IndexError:
+                # ran out of qualifiers
+                # using UUID instead
+                new_qualifier = str(uuid.uuid4())
         else:
             # No previous qualifier established
             original_stem = stem
             new_qualifier = qualifiers[0]
 
-        #new_stem = original_stem + '_' + str(index)
-        #new_name = stem + '_U' + suffix
-
-        new_name = original_stem + '_' + new_qualifier + suffix
-        new_path = Path(new_name)
         # add unique to stem
-        return(get_unique_path(path=new_path, index=index, qualifiers=qualifiers))
+        new_name = original_stem + '_' + new_qualifier + suffix
+        #new_path = Path(new_name)
+        new_path = path_parent / new_name
+        
+        return(get_unique_path(path=new_path, qualifiers=qualifiers))
     else:
         return path
 
-candidate_path = Path('test.txt')
-qualifiers = list(string.ascii_uppercase)
-#print(qualifiers)
+candidate_path = Path('subpath/test.txt')
+#qualifiers = list(string.ascii_uppercase)
+#test short list
+qualifiers = list('AB')
+print(qualifiers)
 print(candidate_path)
 print(get_unique_path(path=candidate_path, qualifiers=qualifiers))
