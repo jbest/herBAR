@@ -16,10 +16,13 @@ def get_unique_path(path=None, index=0, qualifiers=None):
             print('original_stem:',original_stem)
             failed_qualifier = stem[-1:]
             print('failed_qualifier:',failed_qualifier)
-            new_qualifier = qualifiers[index]
+            failed_qualifier_index = qualifiers.index(failed_qualifier)
+            print('failed_qualifier_index:',failed_qualifier_index)
+            new_qualifier = qualifiers[failed_qualifier_index+1]
         else:
+            # No previous qualifier established
             original_stem = stem
-            new_qualifier = str(index)
+            new_qualifier = qualifiers[0]
 
         #new_stem = original_stem + '_' + str(index)
         #new_name = stem + '_U' + suffix
