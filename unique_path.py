@@ -1,7 +1,7 @@
 from pathlib import Path
 import string
 
-def get_unique_path(path=None, index=0):
+def get_unique_path(path=None, index=0, qualifiers=None):
     if path.exists():
         # get stem
         failed_index = index
@@ -16,18 +16,23 @@ def get_unique_path(path=None, index=0):
             print('original_stem:',original_stem)
             failed_qualifier = stem[-1:]
             print('failed_qualifier:',failed_qualifier)
+            new_qualifier = qualifiers[index]
         else:
             original_stem = stem
+            new_qualifier = str(index)
 
         #new_stem = original_stem + '_' + str(index)
-        #new_name = stem + '_U' + suffix    
-        new_name = original_stem + '_' + str(index) + suffix
+        #new_name = stem + '_U' + suffix
+
+        new_name = original_stem + '_' + new_qualifier + suffix
         new_path = Path(new_name)
         # add unique to stem
-        return(get_unique_path(path=new_path, index=index))
+        return(get_unique_path(path=new_path, index=index, qualifiers=qualifiers))
     else:
         return path
 
 candidate_path = Path('test.txt')
+qualifiers = list(string.ascii_uppercase)
+#print(qualifiers)
 print(candidate_path)
-print(get_unique_path(path=candidate_path))
+print(get_unique_path(path=candidate_path, qualifiers=qualifiers))
