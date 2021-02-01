@@ -437,8 +437,11 @@ print('Files analyzed:', files_analyzed)
 # files_processed is number of files which match the expected extensions for image files
 print('Files processed:', files_processed)
 print('Renames attempted:', renames_attempted)
-print('Renames failed:', renames_failed, '({:.1%})'.format(renames_failed/renames_attempted))
-print('Missing barcodes:', missing_barcodes, '({:.1%})'.format(missing_barcodes/files_analyzed))
+if renames_attempted > 0:
+    print('Renames failed:', renames_failed, '({:.1%})'.format(renames_failed/renames_attempted))
+    print('Missing barcodes:', missing_barcodes, '({:.1%})'.format(missing_barcodes/files_analyzed))
+else:
+    print('Input directory not found or contains no images matching search pattern.')
 print('Duration:', analysis_end_time - analysis_start_time)
 if files_analyzed > 0:
     print('Time per file:', (analysis_end_time - analysis_start_time) / files_analyzed)
