@@ -362,13 +362,15 @@ def walk(path=None):
                         #print(barcodes)
                         barcode_values = [b['data'] for b in barcodes]
                         multi_string = '_BARCODES[' + ','.join(barcode_values) + ']'
-                        print('ALERT - multiple barcodes found. Using first barcode of', len(barcodes), ':', barcodes[0]['data'])
-                        #print('ALERT - multiple barcodes in file:', file_path)
+                        selected_barcode = barcodes[0]['data']
+                        if prepend_code:
+                            selected_barcode = prepend_code + selected_barcode
+                        print('ALERT - multiple barcodes found. Using first barcode of', len(barcodes), ':', selected_barcode)
                     else:
                         multi_string = ''
                     # process JPEG
                     if jpeg_rename:
-                        # prepend JPEG string
+                        # append JPEG string
                         jpeg_stem = barcode + multi_string  + '_' + jpeg_rename
                     else:
                         jpeg_stem = barcode + multi_string
