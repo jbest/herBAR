@@ -361,7 +361,7 @@ def walk(path=None):
                     if len(barcodes) > 1:
                         #print(barcodes)
                         barcode_values = [b['data'] for b in barcodes]
-                        multi_string = '_BARCODES[' + '|'.join(barcode_values) + ']'
+                        multi_string = '_BARCODES[' + ','.join(barcode_values) + ']'
                         print('ALERT - multiple barcodes found. Using only first barcode of', len(barcodes))
                         #print('ALERT - multiple barcodes in file:', file_path)
                     else:
