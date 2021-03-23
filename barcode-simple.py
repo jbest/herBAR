@@ -11,6 +11,7 @@ from PIL import Image
 from pathlib import Path
 from pyzbar.pyzbar import decode
 import string
+from tqdm import tqdm
 
 # File extensions that are scanned and logged
 INPUT_FILE_TYPES = ['.jpg', '.jpeg', '.JPG', '.JPEG']
@@ -327,7 +328,7 @@ def get_barcodes(file_path=None):
 def walk(path=None):
     global files_analyzed, renames_failed, missing_barcodes, files_processed
     for root, dirs, files in os.walk(path):
-        for file in files:
+        for file in tqdm(files, ascii=True, desc='renaming images'):
             files_analyzed += 1
             #print('increment file count:', file)
             file_path_string = os.path.join(root, file)
