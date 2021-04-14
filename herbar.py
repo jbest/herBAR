@@ -255,7 +255,7 @@ def get_default_barcode(barcodes=None, default_prefix=None):
         # not cases sensitive
         for barcode in barcodes:
             if barcode['data'].lower().startswith(default_prefix.lower()):
-                return barcode
+                return barcode['data']
         # if no match, return first barcode
         return barcodes[0]['data']
     else:
@@ -297,8 +297,6 @@ def walk(path=None):
                     # Get first barcode value for file name
                     #barcode = barcodes[0]['data']
                     barcode = get_default_barcode(barcodes=barcodes, default_prefix=default_prefix)
-                    if prepend_code:
-                        barcode = prepend_code + barcode
                     # Handle multiple barcodes
                     if default_prefix:
                         # if a default prefix is designated, don't capture multiple barcodes
@@ -313,9 +311,10 @@ def walk(path=None):
                             # only one barcode, use empty multi value
                             multi_string = ''
                     # process JPEG
+                    print('multi_string:', multi_string, type(multi_string))
+                    print('barcode:', barcode, type(barcode))
                     if jpeg_rename:
                         # append JPEG string
-                        print('multi_string:', type(multi_string))
                         jpeg_stem = barcode + multi_string  + '_' + jpeg_rename
                     else:
                         jpeg_stem = barcode + multi_string
@@ -379,7 +378,8 @@ if __name__ == "__main__":
     ap.add_argument("-p", "--project", required=False, choices=PROJECT_IDS,
         help="Project name for filtering in database")
     ap.add_argument("-d", "--default_prefix", required=False,
-        help="Barcode prefix string which will be used when multiple barcodes are found.")
+        help="Barcode prefix string which will be used as the primary barcode when multiple barcodes are found. \
+        Suppresses multiple barcode names in filename.")
     ap.add_argument("-b", "--batch", required=False,
         help="Flags written to batch_flags, can be used for filtering downstream data.")
     ap.add_argument("-o", "--output", nargs='?', default='primary', const='secondary',
