@@ -144,85 +144,6 @@ def log_file_data(
         'derived_from_file': derived_from_file, 'derived_from_uuid': derived_from_uuid,
         'barcodes': barcodes, 'barcode': barcode})
 
-# set up argument parser
-ap = argparse.ArgumentParser()
-ap.add_argument("-s", "--source", required=True,
-    help="Path to the directory that contains the images to be analyzed.")
-ap.add_argument("-p", "--project", required=False, choices=PROJECT_IDS,
-    help="Project name for filtering in database")
-ap.add_argument("-b", "--batch", required=False,
-    help="Flags written to batch_flags, can be used for filtering downstream data.")
-ap.add_argument("-o", "--output", nargs='?', default='primary', const='secondary',
-    help="Path to the directory where log file is written. \
-    By default (no -o switch used) log will be written to location of script. \
-    If just the -o switch is used, log is written to directory indicated in source argument. \
-    An absolute or relative path may also be provided.")
-ap.add_argument("-n", "--no_rename", required=False, action='store_true',
-    help="Files will not be renamed, only log file generated.")
-ap.add_argument("-c", "--code", required=False,
-    help="Collection or herbarium code prepended to barcode values.")
-ap.add_argument("-v", "--verbose", required=False, action='store_true',
-    help="Detailed output for each file processed.")
-ap.add_argument("-j", "--jpeg_rename", nargs='?', default=False, const=JPG_RENAME_STRING,
-    help="String will be added to JPEG file names to prevent name conflicts downstream.")
-args = vars(ap.parse_args())
-
-analysis_start_time = datetime.now()
-batch_id = str(uuid.uuid4())
-batch_path = os.path.realpath(args["source"])
-project_id = args["project"]
-no_rename = args["no_rename"]
-prepend_code = args["code"]
-verbose = args["verbose"]
-output_location = args["output"]
-jpeg_rename = args["jpeg_rename"]
-#print('prepend_code', prepend_code)
-
-if args["batch"]:
-    batch_flags = args["batch"]
-    if verbose:
-        print('Batch flags:', batch_flags)
-else:
-    batch_flags = None
-
-# Create log file for results
-log_file_name = analysis_start_time.date().isoformat() + '_' + batch_id + '.csv'
-# Create and test log output path
-if output_location == 'primary':
-    # No alternative log path specified (uses script path)
-    #TODO explicitly get script directory
-    log_file_path = log_file_name
-elif output_location == 'secondary':
-    # Alternative path specified implicitly (uses source directory path)
-    output_directory = os.path.realpath(args["source"])
-    print('output_directory:', output_directory)
-    log_file_path = os.path.join(output_directory, log_file_name)
-else:
-    # Explicit alternative path specified
-    output_directory = os.path.realpath(output_location)
-    print('output_directory:', output_directory)
-    #TODO make sure directory exists and is writeable, otherwise, fall back to primary location
-    log_file_path = os.path.join(output_directory, log_file_name)
-
-csvfile = open(log_file_path, 'w', newline='')
-# write header
-fieldnames = [
-    'batch_id', 'batch_path', 'batch_flags', 'project_id',
-    'image_event_id', 'datetime_analyzed', 'barcodes', 'barcode',
-    'status', 'status_details',
-    'image_path', 'basename', 'file_name', 'new_path',
-    'file_creation_time',
-    'file_hash', 'file_uuid', 'derived_from_file', 'derived_from_uuid']
-log_writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-log_writer.writeheader()
-
-directory_path = os.path.realpath(args["source"])
-files_analyzed = 0
-files_processed = 0
-renames_attempted = 0
-renames_failed = 0
-missing_barcodes = 0
-
 def process(
     file_path=None, new_stem=None,
     uuid=None,
@@ -425,27 +346,110 @@ def walk(path=None):
                         #file_uuid=uuid, file_creation_time=file_creation_time, file_hash=file_hash,
                         #derived_from_file=derived_from_file, derived_from_uuid=derived_from_uuid
                         )
-print('scanning:', batch_path)
-walk(path=batch_path)
 
-# Close CSV log file
-csvfile.close()
 
-analysis_end_time = datetime.now()
+if __name__ == "__main__":
+    # set up argument parser
+    ap = argparse.ArgumentParser()
+    ap.add_argument("-s", "--source", required=True,
+        help="Path to the directory that contains the images to be analyzed.")
+    ap.add_argument("-p", "--project", required=False, choices=PROJECT_IDS,
+        help="Project name for filtering in database")
+    ap.add_argument("-b", "--batch", required=False,
+        help="Flags written to batch_flags, can be used for filtering downstream data.")
+    ap.add_argument("-o", "--output", nargs='?', default='primary', const='secondary',
+        help="Path to the directory where log file is written. \
+        By default (no -o switch used) log will be written to location of script. \
+        If just the -o switch is used, log is written to directory indicated in source argument. \
+        An absolute or relative path may also be provided.")
+    ap.add_argument("-n", "--no_rename", required=False, action='store_true',
+        help="Files will not be renamed, only log file generated.")
+    ap.add_argument("-c", "--code", required=False,
+        help="Collection or herbarium code prepended to barcode values.")
+    ap.add_argument("-v", "--verbose", required=False, action='store_true',
+        help="Detailed output for each file processed.")
+    ap.add_argument("-j", "--jpeg_rename", nargs='?', default=False, const=JPG_RENAME_STRING,
+        help="String will be added to JPEG file names to prevent name conflicts downstream.")
+    args = vars(ap.parse_args())
 
-print('Started:', analysis_start_time)
-print('Completed:', analysis_end_time)
-# files_analyzed is the total number of files encountered in directory which is scanned
-print('Files analyzed:', files_analyzed)
-# files_processed is number of files which match the expected extensions for image files
-print('Files processed:', files_processed)
-print('Renames attempted:', renames_attempted)
-if renames_attempted > 0:
-    print('Renames failed:', renames_failed, '({:.1%})'.format(renames_failed/renames_attempted))
-    print('Missing barcodes:', missing_barcodes, '({:.1%})'.format(missing_barcodes/files_analyzed))
-else:
-    print('Input directory not found or contains no images matching search pattern.')
-print('Duration:', analysis_end_time - analysis_start_time)
-if files_analyzed > 0:
-    print('Time per file:', (analysis_end_time - analysis_start_time) / files_analyzed)
-print('Report written to:', log_file_path)
+    analysis_start_time = datetime.now()
+    batch_id = str(uuid.uuid4())
+    batch_path = os.path.realpath(args["source"])
+    project_id = args["project"]
+    no_rename = args["no_rename"]
+    prepend_code = args["code"]
+    verbose = args["verbose"]
+    output_location = args["output"]
+    jpeg_rename = args["jpeg_rename"]
+    #print('prepend_code', prepend_code)
+
+    if args["batch"]:
+        batch_flags = args["batch"]
+        if verbose:
+            print('Batch flags:', batch_flags)
+    else:
+        batch_flags = None
+
+    # Create log file for results
+    log_file_name = analysis_start_time.date().isoformat() + '_' + batch_id + '.csv'
+    # Create and test log output path
+    if output_location == 'primary':
+        # No alternative log path specified (uses script path)
+        #TODO explicitly get script directory
+        log_file_path = log_file_name
+    elif output_location == 'secondary':
+        # Alternative path specified implicitly (uses source directory path)
+        output_directory = os.path.realpath(args["source"])
+        print('output_directory:', output_directory)
+        log_file_path = os.path.join(output_directory, log_file_name)
+    else:
+        # Explicit alternative path specified
+        output_directory = os.path.realpath(output_location)
+        print('output_directory:', output_directory)
+        #TODO make sure directory exists and is writeable, otherwise, fall back to primary location
+        log_file_path = os.path.join(output_directory, log_file_name)
+
+    csvfile = open(log_file_path, 'w', newline='')
+    # write header
+    fieldnames = [
+        'batch_id', 'batch_path', 'batch_flags', 'project_id',
+        'image_event_id', 'datetime_analyzed', 'barcodes', 'barcode',
+        'status', 'status_details',
+        'image_path', 'basename', 'file_name', 'new_path',
+        'file_creation_time',
+        'file_hash', 'file_uuid', 'derived_from_file', 'derived_from_uuid']
+    log_writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+    log_writer.writeheader()
+
+    directory_path = os.path.realpath(args["source"])
+    files_analyzed = 0
+    files_processed = 0
+    renames_attempted = 0
+    renames_failed = 0
+    missing_barcodes = 0
+
+    # Start scanning input directory
+    print('scanning:', batch_path)
+    walk(path=batch_path)
+    # Scan complete
+
+    # Close CSV log file
+    csvfile.close()
+    analysis_end_time = datetime.now()
+
+    print('Started:', analysis_start_time)
+    print('Completed:', analysis_end_time)
+    # files_analyzed is the total number of files encountered in directory which is scanned
+    print('Files analyzed:', files_analyzed)
+    # files_processed is number of files which match the expected extensions for image files
+    print('Files processed:', files_processed)
+    print('Renames attempted:', renames_attempted)
+    if renames_attempted > 0:
+        print('Renames failed:', renames_failed, '({:.1%})'.format(renames_failed/renames_attempted))
+        print('Missing barcodes:', missing_barcodes, '({:.1%})'.format(missing_barcodes/files_analyzed))
+    else:
+        print('Input directory not found or contains no images matching search pattern.')
+    print('Duration:', analysis_end_time - analysis_start_time)
+    if files_analyzed > 0:
+        print('Time per file:', (analysis_end_time - analysis_start_time) / files_analyzed)
+    print('Report written to:', log_file_path)
