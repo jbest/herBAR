@@ -14,7 +14,7 @@ import string
 from tqdm import tqdm
 
 # File extensions that are scanned and logged
-INPUT_FILE_TYPES = ['.jpg', '.jpeg', '.JPG', '.JPEG']
+INPUT_FILE_TYPES = ['.jpg', '.jpeg', '.JPG', '.JPEG', '.tif', '.TIF', '.TIFF', '.tiff']
 # File type extensions that are logged when filename matches a scanned input file
 ARCHIVE_FILE_TYPES = ['.CR2', '.cr2', '.RAW', '.raw', '.NEF', '.nef', '.DNG', '.dng']
 # Barcode symbologies accepted, others ignored
@@ -148,8 +148,10 @@ def process(
     file_path=None, new_stem=None,
     uuid=None,
     derived_from_file=None, derived_from_uuid=None,
-    barcode=None, barcodes=None,
-    image_event_id=None):
+    barcode=None,
+    barcodes=None,
+    image_event_id=None
+        ):
     global renames_failed, renames_attempted, files_processed
     files_processed += 1
     # Get file creation time
@@ -246,6 +248,20 @@ def get_barcodes(file_path=None):
         print('No barcodes found:', file_path)
         return None
 
+def get_default_barcode(barcodes=None, default_prefix=None):
+    print('barcodes:', barcodes)
+    if default_prefix:
+        # return first barcode which matches default prefix
+        # not cases sensitive
+        for barcode in barcodes:
+            if barcode['data'].lower().startswith(default_prefix.lower()):
+                return barcode
+        # if no match, return first barcode
+        return barcodes[0]['data']
+    else:
+        # return first barcode if no default prefix is specified
+        return barcodes[0]['data']
+
 def walk(path=None):
     global files_analyzed, renames_failed, missing_barcodes, files_processed
     for root, dirs, files in os.walk(path):
@@ -279,20 +295,27 @@ def walk(path=None):
                     # assume first barcode
                     # TODO check barcode pattern
                     # Get first barcode value for file name
-                    barcode = barcodes[0]['data']
-                    if len(barcodes) > 1:
-                        #print(barcodes)
-                        barcode_values = [b['data'] for b in barcodes]
-                        multi_string = '_BARCODES[' + ','.join(barcode_values) + ']'
-                        selected_barcode = barcodes[0]['data']
-                        if prepend_code:
-                            selected_barcode = prepend_code + selected_barcode
-                        print('ALERT - multiple barcodes found. Using first barcode of', len(barcodes), ':', selected_barcode)
-                    else:
+                    #barcode = barcodes[0]['data']
+                    barcode = get_default_barcode(barcodes=barcodes, default_prefix=default_prefix)
+                    if prepend_code:
+                        barcode = prepend_code + barcode
+                    # Handle multiple barcodes
+                    if default_prefix:
+                        # if a default prefix is designated, don't capture multiple barcodes
                         multi_string = ''
+                    else:
+                        if len(barcodes) > 1:
+                            #print(barcodes)
+                            barcode_values = [b['data'] for b in barcodes]
+                            multi_string = '_BARCODES[' + ','.join(barcode_values) + ']'
+                            print('ALERT - multiple barcodes found. Using default barcode of', len(barcodes), ':', barcode)
+                        else:
+                            # only one barcode, use empty multi value
+                            multi_string = ''
                     # process JPEG
                     if jpeg_rename:
                         # append JPEG string
+                        print('multi_string:', type(multi_string))
                         jpeg_stem = barcode + multi_string  + '_' + jpeg_rename
                     else:
                         jpeg_stem = barcode + multi_string
@@ -355,6 +378,8 @@ if __name__ == "__main__":
         help="Path to the directory that contains the images to be analyzed.")
     ap.add_argument("-p", "--project", required=False, choices=PROJECT_IDS,
         help="Project name for filtering in database")
+    ap.add_argument("-d", "--default_prefix", required=False,
+        help="Barcode prefix string which will be used when multiple barcodes are found.")
     ap.add_argument("-b", "--batch", required=False,
         help="Flags written to batch_flags, can be used for filtering downstream data.")
     ap.add_argument("-o", "--output", nargs='?', default='primary', const='secondary',
@@ -389,6 +414,11 @@ if __name__ == "__main__":
             print('Batch flags:', batch_flags)
     else:
         batch_flags = None
+
+    if args["default_prefix"]:
+        default_prefix = args["default_prefix"]
+    else:
+        default_prefix = None
 
     # Create log file for results
     log_file_name = analysis_start_time.date().isoformat() + '_' + batch_id + '.csv'
