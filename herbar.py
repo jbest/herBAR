@@ -249,7 +249,7 @@ def get_barcodes(file_path=None):
         return None
 
 def get_default_barcode(barcodes=None, default_prefix=None):
-    print('barcodes:', barcodes)
+    #print('barcodes:', barcodes)
     if default_prefix:
         # return first barcode which matches default prefix
         # not cases sensitive
@@ -311,8 +311,8 @@ def walk(path=None):
                             # only one barcode, use empty multi value
                             multi_string = ''
                     # process JPEG
-                    print('multi_string:', multi_string, type(multi_string))
-                    print('barcode:', barcode, type(barcode))
+                    #print('multi_string:', multi_string, type(multi_string))
+                    #print('barcode:', barcode, type(barcode))
                     if jpeg_rename:
                         # append JPEG string
                         jpeg_stem = barcode + multi_string  + '_' + jpeg_rename
