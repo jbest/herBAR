@@ -4,10 +4,15 @@ A barcode renamer for herbarium specimens
 ### Requirements
 
 Python 3.*  
+
 Pillow >= 7.0.0
+
 zbar
+
 pyzbar >= 0.1.9
+
 tqdm >= 4.64.0
+
 
 ### Installation
 
