@@ -9,7 +9,9 @@ zbar
 
 ### Installation
 
-Download the script file to your local computer and install the required modules.
+Install ZBar for your platform (https://zbar.sourceforge.net/)
+
+Download the script files (herbar.py and unique_path.py) to your local computer and install the required modules.
 To install modules, use pip:
 
 	pip install -r requirements.txt
