@@ -16,7 +16,7 @@ from tqdm import tqdm
 # File extensions that are scanned and logged
 INPUT_FILE_TYPES = ['.jpg', '.jpeg', '.JPG', '.JPEG', '.tif', '.TIF', '.TIFF', '.tiff']
 # File type extensions that are logged when filename matches a scanned input file
-ARCHIVE_FILE_TYPES = ['.CR2', '.cr2', '.RAW', '.raw', '.NEF', '.nef', '.DNG', '.dng']
+ARCHIVE_FILE_TYPES = ['.CR3', '.cr3', '.CR2', '.cr2', '.RAW', '.raw', '.NEF', '.nef', '.DNG', '.dng']
 # Barcode symbologies accepted, others ignored
 ACCEPTED_SYMBOLOGIES = ['CODE39']
 # TODO add accepted barcode string patterns
