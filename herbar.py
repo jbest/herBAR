@@ -311,8 +311,6 @@ def walk(path=None):
                             # only one barcode, use empty multi value
                             multi_string = ''
                     # process JPEG
-                    print('multi_string:', multi_string, type(multi_string))
-                    print('barcode:', barcode, type(barcode))
                     if jpeg_rename:
                         # append JPEG string
                         jpeg_stem = barcode + multi_string  + '_' + jpeg_rename
